@@ -9,14 +9,22 @@ const Footer = () => {
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Brand */}
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-sm shadow-orange-500/20">
-              <span className="text-white font-bold text-xs">V</span>
-            </div>
-            <span className="text-slate-700 font-bold text-sm">
-              Visitor<span className="text-orange-500">Pass</span>
-            </span>
+         <Link href="/" className="flex items-center gap-2.5">
+          <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-400 shadow-md shadow-orange-500/20 flex-shrink-0">
+            <Image
+              src="/punit.png"
+              alt="Punit Joshi"
+              fill
+              className="object-cover"
+            />
           </div>
+          <div className="leading-tight">
+            <span className="text-slate-800 font-bold text-base tracking-tight block">
+              Punit <span className="text-orange-500">Joshi</span>
+            </span>
+            <span className="text-slate-400 text-[10px] font-medium">Visitor Management</span>
+          </div>
+        </Link>
 
           {/* Links */}
           <div className="flex items-center gap-5 text-sm text-slate-500">

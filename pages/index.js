@@ -66,15 +66,15 @@ export default function Home() {
           {/* Feature cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-16">
             {[
-              { icon: "👤", title: "Easy Registration", desc: "Multi-step form for smooth visitor onboarding." },
-              { icon: "📋", title: "Purpose Tracking", desc: "Record visit purpose — medical, education, business & more." },
-              { icon: "🔒", title: "Secure & Fast", desc: "Role-based access for admins and visitors." },
+              { icon: "", title: "Easy Registration", desc: "Multi-step form for smooth visitor onboarding." },
+              { icon: "", title: "Purpose Tracking", desc: "Record visit purpose — medical, education, business & more." },
+              { icon: "", title: "Secure & Fast", desc: "Role-based access for admins and visitors." },
             ].map((f) => (
               <div
                 key={f.title}
                 className="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm text-left hover:shadow-md hover:border-orange-200 transition-all"
               >
-                <span className="text-2xl mb-3 block">{f.icon}</span>
+                {/* <span className="text-2xl mb-3 block">{f.icon}</span> */}
                 <h3 className="font-bold text-slate-800 text-sm mb-1">{f.title}</h3>
                 <p className="text-slate-500 text-xs leading-relaxed">{f.desc}</p>
               </div>
