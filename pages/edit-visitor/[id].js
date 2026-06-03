@@ -27,7 +27,7 @@ const EditVisitor = ({ visitor }) => {
       });
       if (response.ok) {
         toast.success("Visitor updated successfully!");
-        setTimeout(() => router.push("/admin/visitorList"), 1500);
+        setTimeout(() => router.push("/admin/visitorTable"), 1500);
       } else {
         toast.error("Failed to update the visitor.");
       }
