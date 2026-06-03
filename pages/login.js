@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
+import Link from "next/link";
 import { toast } from "react-toastify";
 import Head from "next/head";
 
@@ -55,17 +57,22 @@ export default function Login() {
           {/* Card */}
           <div className="bg-white rounded-3xl shadow-xl shadow-orange-500/10 border border-orange-100 p-8 md:p-10">
             {/* Logo */}
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/30">
-                <span className="text-white font-bold text-lg">V</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-slate-800 leading-tight">
-                  Visitor<span className="text-orange-500">Pass</span>
-                </h1>
-                <p className="text-xs text-slate-400">Management System</p>
-              </div>
-            </div>
+            <Link href="/" className="flex items-center gap-2.5">
+          <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-400 shadow-md shadow-orange-500/20 flex-shrink-0">
+            <Image
+              src="/punit.png"
+              alt="Punit Joshi"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <div className="leading-tight">
+            <span className="text-slate-800 font-bold text-base tracking-tight block">
+              Punit <span className="text-orange-500">Joshi</span>
+            </span>
+            <span className="text-slate-400 text-[10px] font-medium">Visitor Management</span>
+          </div>
+        </Link>
 
             <h2 className="text-2xl font-bold text-slate-800 mb-1">Welcome back</h2>
             <p className="text-sm text-slate-500 mb-8">Sign in to continue to the portal</p>
