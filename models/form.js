@@ -1,4 +1,15 @@
 import mongoose from 'mongoose';
+import dns from 'dns';
+
+// Force Node.js to use public DNS servers (Google/Cloudflare) to resolve MongoDB Atlas SRV connection strings
+if (dns && typeof dns.setServers === "function") {
+    dns.setServers(["8.8.8.8", "1.1.1.1"]);
+}
+
+// Force Node.js to prefer IPv4 DNS resolution to fix MongoDB Atlas SRV lookup issues on Windows
+if (dns && typeof dns.setDefaultResultOrder === "function") {
+    dns.setDefaultResultOrder("ipv4first");
+}
 
 const FormDataSchema = new mongoose.Schema({
   photos: String,

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Form from '@/models/form';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 export default async function handler(req, res) {
   if (req.method === 'PUT') {
@@ -11,6 +12,16 @@ export default async function handler(req, res) {
     }
 
     try {
+      if (updatedData.photos) {
+        updatedData.photos = await uploadToCloudinary(updatedData.photos, 'visitors/photos');
+      }
+      if (updatedData.studentPhoto) {
+        updatedData.studentPhoto = await uploadToCloudinary(updatedData.studentPhoto, 'visitors/studentPhotos');
+      }
+      if (updatedData.policePhoto) {
+        updatedData.policePhoto = await uploadToCloudinary(updatedData.policePhoto, 'visitors/policePhotos');
+      }
+
       const visitor = await Form.findByIdAndUpdate(id, updatedData, { new: true });
 
       if (!visitor) {
@@ -26,3 +37,11 @@ export default async function handler(req, res) {
     res.status(405).json({ message: 'Method not allowed' });
   }
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};

@@ -1,5 +1,6 @@
 import Visit from '@/models/form';
 import connectDb from '@/middleware/mongoose';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
@@ -9,8 +10,13 @@ const handler = async (req, res) => {
   try {
     const data = req.body;
 
+    // Upload images to Cloudinary if they are in Base64 format
+    const photos = await uploadToCloudinary(data.photos, 'visitors/photos');
+    const studentPhoto = await uploadToCloudinary(data.studentPhoto, 'visitors/studentPhotos');
+    const policePhoto = await uploadToCloudinary(data.policePhoto, 'visitors/policePhotos');
+
     const newVisit = new Visit({
-      photos: data.photos,
+      photos,
       fullName: data.fullName,
       email: data.email,
       phoneNo: data.phoneNo,
@@ -33,7 +39,7 @@ const handler = async (req, res) => {
       studentDOB: data.studentDOB,
       studentGender: data.studentGender,
       studentCategory: data.studentCategory,
-      studentPhoto: data.studentPhoto,
+      studentPhoto: studentPhoto,
       jobFullName: data.jobFullName,
       jobPosition: data.jobPosition,
       jobDepartment: data.jobDepartment,
@@ -66,7 +72,7 @@ const handler = async (req, res) => {
       policeIncidentDetails: data.policeIncidentDetails,
       policeInvolveName: data.policeInvolveName,
       policeDeclaration: data.policeDeclaration,
-      policePhoto: data.policePhoto,
+      policePhoto: policePhoto,
       projectName: data.projectName,
       projectLocation: data.projectLocation,
       projectProblem: data.projectProblem,
@@ -80,6 +86,14 @@ const handler = async (req, res) => {
     console.error('Error adding visit:', error);
     return res.status(500).json({ success: false, message: 'Error adding visit' });
   }
+};
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
 };
 
 export default connectDb(handler);

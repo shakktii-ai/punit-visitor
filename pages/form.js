@@ -7,6 +7,7 @@ const Form = () => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const totalSteps = 4;
 
   const [formData, setFormData] = useState({
@@ -318,6 +319,15 @@ const Form = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (currentStep !== totalSteps) {
+      if (validateStep(currentStep)) {
+        setCurrentStep((prev) => prev + 1);
+      } else {
+        toast.error("Please fill in all required fields correctly.");
+      }
+      return;
+    }
+
     let allStepsValid = true;
     let firstFailedStep = null;
     
@@ -336,6 +346,7 @@ const Form = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const res = await fetch("/api/addform", {
         method: "POST",
@@ -352,6 +363,8 @@ const Form = () => {
     } catch (error) {
       console.error("Error submitting form:", error);
       toast.error("There was an error submitting the form.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -881,9 +894,11 @@ const Form = () => {
                 <>
                   {currentStep > 1 ? (
                     <button
+                      key="prev-button"
                       type="button"
+                      disabled={isSubmitting}
                       onClick={() => setCurrentStep((prev) => prev - 1)}
-                      className="flex items-center gap-2 px-6 py-3 rounded-xl text-slate-600 border border-slate-200 hover:bg-slate-50 bg-white transition-all duration-300"
+                      className="flex items-center gap-2 px-6 py-3 rounded-xl text-slate-600 border border-slate-200 hover:bg-slate-50 bg-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <HiArrowLeft className="w-4 h-4" />
                       Previous
@@ -894,6 +909,7 @@ const Form = () => {
 
                   {currentStep < totalSteps ? (
                     <button
+                      key="next-button"
                       type="button"
                       onClick={() => {
                         if (validateStep(currentStep)) {
@@ -909,10 +925,22 @@ const Form = () => {
                     </button>
                   ) : (
                     <button
+                      key="submit-button"
                       type="submit"
-                      className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
+                      disabled={isSubmitting}
+                      className="flex items-center gap-2 px-8 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold hover:from-orange-600 hover:to-amber-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-orange-500/20"
                     >
-                      Submit Registration
+                      {isSubmitting ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                          Submitting...
+                        </>
+                      ) : (
+                        "Submit Registration"
+                      )}
                     </button>
                   )}
                 </>
