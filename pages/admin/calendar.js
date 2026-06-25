@@ -12,6 +12,25 @@ const englishMonths = [
 
 const englishWeekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+const positionTranslation = {
+  "बूथ प्रमुख": "Booth Head",
+  "शक्ती केंद्र प्रमुख": "Shakti Kendra Head",
+  "मंडळ अध्यक्ष": "Mandal President",
+  "मंडळ सरचिटणीस": "Mandal General Secretary",
+  "शहर उपाध्यक्ष": "City Vice President",
+  "जिल्हा कार्यकारिणी सदस्य": "District Executive Member",
+  "कार्यकर्ता": "Worker",
+  "Booth Head": "Booth Head",
+  "Shakti Kendra Head": "Shakti Kendra Head",
+  "Mandal President": "Mandal President",
+  "Mandal General Secretary": "Mandal General Secretary",
+  "City Vice President": "City Vice President",
+  "District Executive Member": "District Executive Member",
+  "Worker": "Worker",
+};
+
+const getPositionText = (pos) => positionTranslation[pos] || pos;
+
 export default function AdminCalendar() {
   const router = useRouter();
 
@@ -26,6 +45,7 @@ export default function AdminCalendar() {
   const [newTodo, setNewTodo] = useState({ title: "", description: "" });
   const [editingTodoId, setEditingTodoId] = useState(null);
   const [editingTodo, setEditingTodo] = useState({ title: "", description: "" });
+  const [expandedEventIndex, setExpandedEventIndex] = useState(null);
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
@@ -125,27 +145,27 @@ export default function AdminCalendar() {
     workers.forEach((w) => {
       // Worker Birthday
       if (w.DOB && isSameDayMonth(w.DOB, date)) {
-        dayEvents.push({ type: "worker_birthday", label: `🎂 ${w.firstName} ${w.lastName} (Birthday)`, name: `${w.firstName} ${w.lastName}` });
+        dayEvents.push({ type: "worker_birthday", label: `🎂 ${w.firstName} ${w.lastName} (Birthday)`, name: `${w.firstName} ${w.lastName}`, worker: w });
       }
       // Spouse Birthday
       if ((w.maritalStatus === "विवाहित" || w.maritalStatus === "Married") && w.spouseName && w.spouseDOB && isSameDayMonth(w.spouseDOB, date)) {
-        dayEvents.push({ type: "spouse_birthday", label: `🎂 ${w.spouseName} (${w.firstName}'s Spouse Birthday)`, name: w.spouseName });
+        dayEvents.push({ type: "spouse_birthday", label: `🎂 ${w.spouseName} (${w.firstName}'s Spouse Birthday)`, name: w.spouseName, worker: w });
       }
       // Wedding Anniversary
       if ((w.maritalStatus === "विवाहित" || w.maritalStatus === "Married") && w.spouseName && w.anniversaryDate && isSameDayMonth(w.anniversaryDate, date)) {
-        dayEvents.push({ type: "wedding_anniversary", label: `🎉 ${w.firstName} & ${w.spouseName} (Wedding Anniversary)` });
+        dayEvents.push({ type: "wedding_anniversary", label: `🎉 ${w.firstName} & ${w.spouseName} (Wedding Anniversary)`, worker: w });
       }
       // Father Birthday
       if (w.fatherName && w.fatherDOB && isSameDayMonth(w.fatherDOB, date)) {
-        dayEvents.push({ type: "father_birthday", label: `🎂 ${w.fatherName} (${w.firstName}'s Father Birthday)` });
+        dayEvents.push({ type: "father_birthday", label: `🎂 ${w.fatherName} (${w.firstName}'s Father Birthday)`, worker: w });
       }
       // Mother Birthday
       if (w.motherName && w.motherDOB && isSameDayMonth(w.motherDOB, date)) {
-        dayEvents.push({ type: "mother_birthday", label: `🎂 ${w.motherName} (${w.firstName}'s Mother Birthday)` });
+        dayEvents.push({ type: "mother_birthday", label: `🎂 ${w.motherName} (${w.firstName}'s Mother Birthday)`, worker: w });
       }
       // Parents Anniversary
       if (w.fatherName && w.motherName && w.parentsAnniversaryDate && isSameDayMonth(w.parentsAnniversaryDate, date)) {
-        dayEvents.push({ type: "parents_anniversary", label: `🎉 ${w.fatherName} & ${w.motherName} (Parents' Anniversary)` });
+        dayEvents.push({ type: "parents_anniversary", label: `🎉 ${w.fatherName} & ${w.motherName} (Parents' Anniversary)`, worker: w });
       }
     });
 
@@ -338,6 +358,7 @@ export default function AdminCalendar() {
                       setSelectedDate(day);
                       setShowAddForm(false);
                       setEditingTodoId(null);
+                      setExpandedEventIndex(null);
                     }}
                     className={`min-h-[110px] p-2 flex flex-col justify-between hover:bg-orange-50/20 cursor-pointer transition-colors group relative ${
                       isCurrentMonth ? "bg-white" : "bg-slate-50/50 text-slate-400"
@@ -444,17 +465,62 @@ export default function AdminCalendar() {
                     <div className="space-y-2">
                       {items.map((item, iIdx) => {
                         const isAnniv = item.type.includes("anniversary");
+                        const isExpanded = expandedEventIndex === iIdx;
+                        const w = item.worker;
                         return (
                           <div
                             key={iIdx}
-                            className={`p-3 rounded-xl border flex items-center gap-2.5 text-sm font-semibold ${
+                            onClick={() => setExpandedEventIndex(isExpanded ? null : iIdx)}
+                            className={`p-3 rounded-xl border flex flex-col gap-2 text-sm transition-all cursor-pointer ${
                               isAnniv
-                                ? "bg-purple-50/70 border-purple-100 text-purple-800"
-                                : "bg-orange-50/70 border-orange-100 text-orange-800"
+                                ? "bg-purple-50/70 border-purple-100 text-purple-800 hover:bg-purple-50"
+                                : "bg-orange-50/70 border-orange-100 text-orange-800 hover:bg-orange-50"
                             }`}
                           >
-                            <span>{isAnniv ? "🎉" : "🎂"}</span>
-                            <span className="leading-tight">{item.label}</span>
+                            <div className="flex items-center gap-2.5 font-semibold">
+                              <span>{isAnniv ? "🎉" : "🎂"}</span>
+                              <span className="leading-tight flex-1">{item.label}</span>
+                              <span className="text-xs text-slate-400 font-normal">
+                                {isExpanded ? "▲ Hide" : "▼ Details"}
+                              </span>
+                            </div>
+                            {isExpanded && w && (
+                              <div
+                                className="mt-2 pt-2 border-t border-dashed border-slate-200 text-xs text-slate-600 space-y-1.5 font-normal animate-fade-in"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div>
+                                  <span className="font-bold text-slate-500">Worker:</span> {w.firstName} {w.middleName || ""} {w.lastName}
+                                </div>
+                                <div>
+                                  <span className="font-bold text-slate-500">Contact No:</span> {w.primaryPhone || "N/A"}
+                                </div>
+                                <div>
+                                  <span className="font-bold text-slate-500">Position:</span> {getPositionText(w.position)}
+                                </div>
+                                {w.areaNameOrBooth && (
+                                  <div>
+                                    <span className="font-bold text-slate-500">Area/Booth:</span> {w.areaNameOrBooth}
+                                  </div>
+                                )}
+                                <div className="pt-2 flex gap-2">
+                                  <button
+                                    onClick={() => router.push(`/admin/edit-worker/${w._id}`)}
+                                    className="px-2.5 py-1 rounded bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] transition-colors"
+                                  >
+                                    Edit Worker
+                                  </button>
+                                  {w.primaryPhone && (
+                                    <a
+                                      href={`tel:${w.primaryPhone}`}
+                                      className="px-2.5 py-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-[10px] text-center transition-colors"
+                                    >
+                                      Call
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
