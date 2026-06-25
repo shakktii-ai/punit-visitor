@@ -66,7 +66,7 @@ const Navbar = () => {
               router.pathname === "/workers" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
             }`}
           >
-            My Workers
+            Party Workers
           </Link>
           <Link
             href="/letters"
@@ -75,6 +75,14 @@ const Navbar = () => {
             }`}
           >
             My Letters
+          </Link>
+          <Link
+            href="/invitations"
+            className={`text-sm font-medium transition-colors ${
+              router.pathname === "/invitations" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
+            }`}
+          >
+            Saheb Invitations
           </Link>
           <button
             onClick={handleLogout}
@@ -123,10 +131,13 @@ const Navbar = () => {
             My Submissions
           </Link>
           <Link href="/workers" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
-            My Workers
+            Party Workers
           </Link>
           <Link href="/letters" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
             My Letters
+          </Link>
+          <Link href="/invitations" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
+            Saheb Invitations
           </Link>
           <button
             onClick={handleLogout}

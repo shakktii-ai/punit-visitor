@@ -11,7 +11,7 @@ const POSITIONS = [
   "Mandal General Secretary",
   "City Vice President",
   "District Executive Member",
-  "Worker",
+  "Party Worker",
 ];
 
 const positionTranslation = {
@@ -21,14 +21,14 @@ const positionTranslation = {
   "मंडळ सरचिटणीस": "Mandal General Secretary",
   "शहर उपाध्यक्ष": "City Vice President",
   "जिल्हा कार्यकारिणी सदस्य": "District Executive Member",
-  "कार्यकर्ता": "Worker",
+  "कार्यकर्ता": "Party Worker",
   "Booth Head": "Booth Head",
   "Shakti Kendra Head": "Shakti Kendra Head",
   "Mandal President": "Mandal President",
   "Mandal General Secretary": "Mandal General Secretary",
   "City Vice President": "City Vice President",
   "District Executive Member": "District Executive Member",
-  "Worker": "Worker",
+  "Worker": "Party Worker",
 };
 
 const positionColors = {
@@ -201,7 +201,7 @@ const ConfirmModal = ({ worker, onConfirm, onCancel }) => (
       <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4 text-red-500 text-2xl">
         ⚠️
       </div>
-      <h3 className="text-slate-800 font-bold text-lg mb-2">Delete Worker?</h3>
+      <h3 className="text-slate-800 font-bold text-lg mb-2">Delete Party Worker?</h3>
       <p className="text-slate-500 text-sm mb-6 leading-relaxed">
         Are you sure you want to delete the registration of <span className="font-semibold text-slate-700">{worker.firstName} {worker.lastName}</span>? This action cannot be undone.
       </p>
@@ -298,7 +298,7 @@ export default function WorkersListUser() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success("Worker registration deleted successfully.");
+        toast.success("Party Worker registration deleted successfully.");
         setDeleteTarget(null);
         fetchWorkers();
       } else {
@@ -312,17 +312,17 @@ export default function WorkersListUser() {
   return (
     <>
       <Head>
-        <title>My Workers – Punit Joshi</title>
-        <meta name="description" content="View and manage workers you registered." />
+        <title>My Party Workers – Punit Joshi</title>
+        <meta name="description" content="View and manage party workers you registered." />
       </Head>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800">My Workers</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800"> Party Workers</h1>
             <p className="text-slate-500 text-sm mt-1">
-              Total {total} workers registered by you are listed below.
+              Total {total} party workers registered by you are listed below.
             </p>
           </div>
           <div className="flex gap-2.5">
@@ -338,7 +338,7 @@ export default function WorkersListUser() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
             >
               <HiUserAdd className="w-4.5 h-4.5" />
-              New Worker
+              New Party Worker
             </button>
           </div>
         </div>
@@ -486,7 +486,7 @@ export default function WorkersListUser() {
         {!loading && totalPages > 1 && (
           <div className="flex items-center justify-between">
             <p className="text-slate-500 text-xs">
-              Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total} workers
+              Showing {(page - 1) * limit + 1}–{Math.min(page * limit, total)} of {total} party workers
             </p>
             <div className="flex items-center gap-2">
               <button

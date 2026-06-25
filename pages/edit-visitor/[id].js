@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import mongoose from "mongoose";
 import FormModel from "@/models/form";
 import { useRouter } from "next/router";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { HiSave, HiArrowLeft } from "react-icons/hi";
 
@@ -177,7 +177,6 @@ const EditVisitor = ({ visitor }) => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
       <div className="min-h-screen bg-gradient-to-br from-orange-50/40 via-slate-50 to-orange-100/20 p-4 md:p-8">
         <div className="max-w-3xl mx-auto space-y-6">
           <div className="flex items-center gap-4">

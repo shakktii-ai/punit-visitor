@@ -37,7 +37,7 @@ export default function EditWorkerUser() {
       if (res.ok && data.success) {
         setWorker(data.worker);
       } else {
-        toast.error(data.error || "Failed to load worker details or you are not authorized.");
+        toast.error(data.error || "Failed to load party worker details or you are not authorized.");
         router.push("/workers");
       }
     } catch (err) {
@@ -65,7 +65,7 @@ export default function EditWorkerUser() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success("Worker information updated successfully!");
+        toast.success("Party Worker information updated successfully!");
         setTimeout(() => {
           router.push("/workers");
         }, 1500);
@@ -83,8 +83,8 @@ export default function EditWorkerUser() {
   return (
     <>
       <Head>
-        <title>Edit Worker Details – Punit Joshi</title>
-        <meta name="description" content="Edit worker details." />
+        <title>Edit Party Worker Details – Punit Joshi</title>
+        <meta name="description" content="Edit party worker details." />
       </Head>
 
       {loading ? (
@@ -100,7 +100,7 @@ export default function EditWorkerUser() {
           createdBy="user"
         />
       ) : (
-        <div className="text-center py-20 text-slate-500">Worker not found.</div>
+        <div className="text-center py-20 text-slate-500">Party Worker not found.</div>
       )}
     </>
   );

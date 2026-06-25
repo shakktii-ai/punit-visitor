@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import { HiSearch, HiTrash, HiEye, HiPlus, HiRefresh, HiPencil } from "react-icons/hi";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -248,8 +248,6 @@ export default function LettersList() {
         <title>Letters List – Admin Panel</title>
         <meta name="description" content="Manage and view all inward letters." />
       </Head>
-
-      <ToastContainer position="bottom-right" autoClose={3000} theme="light" />
 
       <div className="p-4 md:p-8 space-y-6">
         {/* Header */}

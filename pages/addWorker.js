@@ -33,7 +33,7 @@ export default function AddWorkerUser() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success("Worker registered successfully!");
+        toast.success("Party Worker registered successfully!");
         setTimeout(() => {
           router.push("/workers");
         }, 1500);
@@ -51,8 +51,8 @@ export default function AddWorkerUser() {
   return (
     <>
       <Head>
-        <title>New Worker Registration – Punit Joshi</title>
-        <meta name="description" content="Add a new worker under your management." />
+        <title>New Party Worker Registration – Punit Joshi</title>
+        <meta name="description" content="Add a new party worker under your management." />
       </Head>
 
       <WorkerForm

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import WorkerForm from "@/components/WorkerForm";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -38,7 +38,7 @@ export default function EditWorker() {
       if (res.ok && data.success) {
         setWorker(data.worker);
       } else {
-        toast.error("Failed to load worker details.");
+        toast.error("Failed to load party worker details.");
       }
     } catch (err) {
       console.error(err);
@@ -64,7 +64,7 @@ export default function EditWorker() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success("Worker details updated successfully!");
+        toast.success("Party Worker details updated successfully!");
         setTimeout(() => {
           router.push("/admin/workers");
         }, 1500);
@@ -82,11 +82,9 @@ export default function EditWorker() {
   return (
     <>
       <Head>
-        <title>Edit Worker Details – Admin Panel</title>
-        <meta name="description" content="Edit worker information form for admin panel." />
+        <title>Edit Party Worker Details – Admin Panel</title>
+        <meta name="description" content="Edit party worker information form for admin panel." />
       </Head>
-
-      <ToastContainer position="bottom-right" autoClose={3000} theme="light" />
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -101,7 +99,7 @@ export default function EditWorker() {
           createdBy="admin"
         />
       ) : (
-        <div className="text-center py-20 text-slate-500">Worker not found.</div>
+        <div className="text-center py-20 text-slate-500">Party Worker not found.</div>
       )}
     </>
   );

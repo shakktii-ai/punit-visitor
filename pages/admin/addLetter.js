@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import LetterForm from "@/components/LetterForm";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -55,8 +55,6 @@ export default function AddLetterAdmin() {
         <title>Letter Registration – Admin Panel</title>
         <meta name="description" content="Inward letter registration form for Admin." />
       </Head>
-
-      <ToastContainer position="bottom-right" autoClose={3000} theme="light" />
 
       <LetterForm
         onSubmit={handleSubmit}

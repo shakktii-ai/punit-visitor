@@ -9,7 +9,7 @@ const POSITIONS = [
   { value: "Mandal General Secretary", label: "Mandal General Secretary" },
   { value: "City Vice President", label: "City Vice President" },
   { value: "District Executive Member", label: "District Executive Member" },
-  { value: "Worker", label: "Worker" },
+  { value: "Worker", label: "Party Worker" },
 ];
 
 const MARITAL_STATUSES = [
@@ -269,10 +269,10 @@ export default function WorkerForm({ initialData, onSubmit, isSubmitting, backPa
         </button>
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800">
-            {initialData ? "Edit Worker Details" : "Worker Registration Form"}
+            {initialData ? "Edit Party Worker Details" : "Party Worker Registration Form"}
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">
-            {initialData ? "Update registered worker details" : "Register new workers for organizational and booth levels"}
+            {initialData ? "Update registered party worker details" : "Register new party workers for organizational and booth levels"}
           </p>
         </div>
       </div>
@@ -284,7 +284,7 @@ export default function WorkerForm({ initialData, onSubmit, isSubmitting, backPa
             <HiUser className="w-5 h-5 text-orange-500" />
             <h2 className="text-base font-bold text-slate-800">1. Personal Details</h2>
           </div>
-          {renderFileUpload("Worker Photo", "photo")}
+          {renderFileUpload("Party Worker Photo", "photo")}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {renderInput("First Name *", "firstName", "text", "e.g. John")}
             {renderInput("Middle Name", "middleName", "text", "e.g. Robert")}

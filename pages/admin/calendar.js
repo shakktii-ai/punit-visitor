@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import { HiArrowLeft, HiChevronLeft, HiChevronRight, HiPlus, HiTrash, HiCheck, HiPencil, HiClock } from "react-icons/hi";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -46,6 +46,10 @@ export default function AdminCalendar() {
   const [editingTodoId, setEditingTodoId] = useState(null);
   const [editingTodo, setEditingTodo] = useState({ title: "", description: "" });
   const [expandedEventIndex, setExpandedEventIndex] = useState(null);
+  const [eventRequests, setEventRequests] = useState([]);
+  const [rejectionReason, setRejectionReason] = useState({});
+  const [showRejectFormId, setShowRejectFormId] = useState(null);
+  const [dismissedAlerts, setDismissedAlerts] = useState([]);
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
@@ -57,19 +61,24 @@ export default function AdminCalendar() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [workersRes, todosRes] = await Promise.all([
+      const [workersRes, todosRes, requestsRes] = await Promise.all([
         fetch("/api/workers?limit=1000"), // Get all workers to calculate birthdays
-        fetch("/api/todos")
+        fetch("/api/todos"),
+        fetch("/api/event-requests")
       ]);
 
       const workersData = await workersRes.json();
       const todosData = await todosRes.json();
+      const requestsData = await requestsRes.json();
 
       if (workersRes.ok && workersData.success) {
         setWorkers(workersData.workers);
       }
       if (todosRes.ok && todosData.success) {
         setTodos(todosData.todos);
+      }
+      if (requestsRes.ok && requestsData.success) {
+        setEventRequests(requestsData.requests);
       }
     } catch (err) {
       console.error(err);
@@ -173,6 +182,16 @@ export default function AdminCalendar() {
     const dayTodos = todos.filter((t) => isSameDate(t.date, date));
     dayTodos.forEach((t) => {
       dayEvents.push({ type: "todo", label: `${t.completed ? "✓" : "📝"} ${t.title}`, completed: t.completed, raw: t });
+    });
+
+    // 3. Approved Event Requests
+    const dayRequests = eventRequests.filter((r) => r.status === "Approved" && isSameDate(r.eventDate, date));
+    dayRequests.forEach((r) => {
+      dayEvents.push({
+        type: "approved_event",
+        label: `🎉 ${r.eventName} (${r.eventOrganizer})`,
+        raw: r,
+      });
     });
 
     return dayEvents;
@@ -280,6 +299,97 @@ export default function AdminCalendar() {
     }
   };
 
+  const handleApproveRequest = async (reqId) => {
+    try {
+      const res = await fetch(`/api/event-requests/${reqId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Approved" }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success("Event request approved!");
+        fetchData();
+      } else {
+        toast.error(data.error || "Failed to approve event request.");
+      }
+    } catch {
+      toast.error("Error updating event status.");
+    }
+  };
+
+  const handleRejectRequest = async (reqId) => {
+    const remark = rejectionReason[reqId] || "";
+    try {
+      const res = await fetch(`/api/event-requests/${reqId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Rejected", remark }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success("Event request rejected.");
+        setRejectionReason((prev) => ({ ...prev, [reqId]: "" }));
+        setShowRejectFormId(null);
+        fetchData();
+      } else {
+        toast.error(data.error || "Failed to reject event request.");
+      }
+    } catch {
+      toast.error("Error updating event status.");
+    }
+  };
+
+  const getRemindersForAdmin = () => {
+    const alerts = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    eventRequests.forEach((req) => {
+      if (req.status !== "Approved") return;
+
+      const eventDate = new Date(req.eventDate);
+      eventDate.setHours(0, 0, 0, 0);
+
+      const diffTime = eventDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      // 1 day before reminder
+      if (req.reminderConfig?.oneDayBefore && diffDays === 1) {
+        alerts.push({
+          id: `${req._id}-1day`,
+          message: `Reminder (1 Day Before): Approved event "${req.eventName}" is scheduled for tomorrow at ${req.eventTime}.`,
+          request: req,
+        });
+      }
+
+      // 2 hours before reminder (if event is today)
+      if (req.reminderConfig?.twoHoursBefore && diffDays === 0) {
+        alerts.push({
+          id: `${req._id}-2hr`,
+          message: `Reminder (2 Hours Before): Approved event "${req.eventName}" is scheduled for TODAY at ${req.eventTime}.`,
+          request: req,
+        });
+      }
+
+      // Custom time reminder
+      if (req.reminderConfig?.customTime) {
+        const customTime = new Date(req.reminderConfig.customTime);
+        const now = new Date();
+        const diffMs = now.getTime() - customTime.getTime();
+        if (diffMs >= 0 && diffMs < 24 * 60 * 60 * 1000) {
+          alerts.push({
+            id: `${req._id}-custom`,
+            message: `Custom Reminder: Approved event "${req.eventName}" is coming up! Scheduled on ${new Date(req.eventDate).toLocaleDateString()} at ${req.eventTime}.`,
+            request: req,
+          });
+        }
+      }
+    });
+
+    return alerts;
+  };
+
   return (
     <>
       <Head>
@@ -287,9 +397,39 @@ export default function AdminCalendar() {
         <meta name="description" content="View worker birthdays, anniversaries, and manage administrative to-do lists." />
       </Head>
 
-      <ToastContainer position="bottom-right" autoClose={2000} theme="light" />
-
       <div className="p-4 md:p-8 space-y-6">
+        {/* Active Reminders Banner */}
+        {(() => {
+          const activeAlerts = getRemindersForAdmin().filter(alert => !dismissedAlerts.includes(alert.id));
+          if (activeAlerts.length === 0) return null;
+          return (
+            <div className="space-y-2">
+              {activeAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between shadow-sm animate-fade-in"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">⏰</span>
+                    <div className="text-sm font-semibold text-slate-800">
+                      {alert.message}
+                      <span className="block text-xs text-slate-400 font-normal mt-0.5">
+                        Organizer: {alert.request.eventOrganizer} | Location: {alert.request.eventLocation}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setDismissedAlerts((prev) => [...prev, alert.id])}
+                    className="text-xs font-bold text-amber-600 hover:text-amber-800 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-4">
@@ -359,58 +499,64 @@ export default function AdminCalendar() {
                       setShowAddForm(false);
                       setEditingTodoId(null);
                       setExpandedEventIndex(null);
+                      setShowRejectFormId(null);
                     }}
                     className={`min-h-[110px] p-2 flex flex-col justify-between hover:bg-orange-50/20 cursor-pointer transition-colors group relative ${
                       isCurrentMonth ? "bg-white" : "bg-slate-50/50 text-slate-400"
                     } ${isToday ? "bg-gradient-to-b from-orange-500/5 to-amber-500/5" : ""}`}
                   >
-                    {/* Day number */}
-                    <div className="flex justify-between items-center mb-1">
-                      <span
-                        className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition-all ${
-                          isToday
-                            ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20"
-                            : isCurrentMonth
-                            ? "text-slate-700"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        {day.getDate()}
-                      </span>
-
-                      {/* Dot indicators for mobile view */}
-                      <div className="flex sm:hidden gap-1">
-                        {dayEvents.filter(e => e.type.includes("birthday") || e.type.includes("anniversary")).length > 0 && (
-                          <span className="w-1.5 h-1.5 bg-orange-500 rounded-full" />
-                        )}
-                        {dayEvents.filter(e => e.type === "todo").length > 0 && (
-                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                        )}
+                    {/* Day number & Dot/Text Indicators */}
+                    <div className="flex flex-col justify-between h-full w-full">
+                      <div className="flex justify-between items-center mb-1">
+                        <span
+                          className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition-all ${
+                            isToday
+                              ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20"
+                              : isCurrentMonth
+                              ? "text-slate-700"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          {day.getDate()}
+                        </span>
+                        
+                        {/* Mobile view dot indicators */}
+                        <div className="flex sm:hidden gap-1">
+                          {dayEvents.filter(e => e.type.includes("birthday") || e.type.includes("anniversary")).length > 0 && (
+                            <span className="w-1.5 h-1.5 bg-orange-500 rounded-full" />
+                          )}
+                          {dayEvents.filter(e => e.type === "todo").length > 0 && (
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                          )}
+                          {dayEvents.filter(e => e.type === "approved_event").length > 0 && (
+                            <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Events list (Desktop view) */}
-                    <div className="hidden sm:flex flex-col gap-1 flex-grow overflow-y-auto max-h-[80px] scrollbar-none">
-                      {dayEvents.map((evt, eIdx) => {
-                        let colorClass = "bg-orange-50 text-orange-700 border-orange-100";
-                        if (evt.type.includes("anniversary")) {
-                          colorClass = "bg-purple-50 text-purple-700 border-purple-100";
-                        } else if (evt.type === "todo") {
-                          colorClass = evt.completed
-                            ? "bg-slate-50 text-slate-400 border-slate-100 line-through"
-                            : "bg-green-50 text-green-700 border-green-100 font-semibold";
-                        }
+                      {/* Desktop view indicators */}
+                      <div className="hidden sm:flex flex-col gap-1 mt-auto w-full">
+                        {/* Dots for birthdays/anniversaries and todos */}
+                        <div className="flex gap-1">
+                          {dayEvents.filter(e => e.type.includes("birthday") || e.type.includes("anniversary")).length > 0 && (
+                            <span className="w-2 h-2 bg-orange-500 rounded-full" title="Birthday / Anniversary" />
+                          )}
+                          {dayEvents.filter(e => e.type === "todo").length > 0 && (
+                            <span className="w-2 h-2 bg-green-500 rounded-full" title="To-Do Task" />
+                          )}
+                        </div>
 
-                        return (
+                        {/* Approved Event names instead of blue dots */}
+                        {dayEvents.filter(e => e.type === "approved_event").map((evt, eIdx) => (
                           <div
                             key={eIdx}
                             title={evt.label}
-                            className={`text-[10px] px-1.5 py-0.5 rounded border truncate transition-all ${colorClass}`}
+                            className="text-[9px] px-1.5 py-0.5 rounded border bg-blue-50 text-blue-700 border-blue-100 font-bold truncate w-full"
                           >
-                            {evt.label}
+                            {evt.raw?.eventName}
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );
@@ -447,23 +593,24 @@ export default function AdminCalendar() {
                 </button>
               </div>
 
-              {/* Sub-section 1: Birthdays & Anniversaries */}
+              {/* Sub-section 1: Events, Birthdays & Anniversaries */}
               <div className="space-y-3">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Birthdays & Anniversaries
+                  Events, Birthdays & Anniversaries
                 </h3>
                 {(() => {
                   const items = getEventsForDate(selectedDate).filter((e) => e.type !== "todo");
                   if (items.length === 0) {
                     return (
                       <p className="text-xs text-slate-400 bg-slate-50/50 border border-slate-100 p-3 rounded-xl">
-                        No birthdays or anniversaries on this day.
+                        No events, birthdays or anniversaries on this day.
                       </p>
                     );
                   }
                   return (
                     <div className="space-y-2">
                       {items.map((item, iIdx) => {
+                        const isApprovedEvent = item.type === "approved_event";
                         const isAnniv = item.type.includes("anniversary");
                         const isExpanded = expandedEventIndex === iIdx;
                         const w = item.worker;
@@ -472,7 +619,9 @@ export default function AdminCalendar() {
                             key={iIdx}
                             onClick={() => setExpandedEventIndex(isExpanded ? null : iIdx)}
                             className={`p-3 rounded-xl border flex flex-col gap-2 text-sm transition-all cursor-pointer ${
-                              isAnniv
+                              isApprovedEvent
+                                ? "bg-blue-50/70 border-blue-100 text-blue-800 hover:bg-blue-50"
+                                : isAnniv
                                 ? "bg-purple-50/70 border-purple-100 text-purple-800 hover:bg-purple-50"
                                 : "bg-orange-50/70 border-orange-100 text-orange-800 hover:bg-orange-50"
                             }`}
@@ -519,6 +668,172 @@ export default function AdminCalendar() {
                                     </a>
                                   )}
                                 </div>
+                              </div>
+                            )}
+                            {isExpanded && isApprovedEvent && item.raw && (
+                              <div
+                                className="mt-2 pt-2 border-t border-dashed border-slate-200 text-xs text-slate-600 space-y-1.5 font-normal animate-fade-in"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div>
+                                  <span className="font-bold text-slate-500">Event Name:</span> {item.raw.eventName}
+                                </div>
+                                <div>
+                                  <span className="font-bold text-slate-500">Organizer:</span> {item.raw.eventOrganizer}
+                                </div>
+                                <div>
+                                  <span className="font-bold text-slate-500">Time & Venue:</span> {item.raw.eventTime} at {item.raw.eventLocation}
+                                </div>
+                                <div>
+                                  <span className="font-bold text-slate-500">Purpose:</span> {item.raw.description}
+                                </div>
+                                {item.raw.contactDetails && (
+                                  <div>
+                                    <span className="font-bold text-slate-500">Contact:</span> {item.raw.contactDetails}
+                                  </div>
+                                )}
+                                <div className="pt-2">
+                                  <button
+                                    onClick={() => router.push(`/admin/event-requests`)}
+                                    className="px-2.5 py-1 rounded bg-blue-500 hover:bg-blue-600 text-white font-bold text-[10px] transition-colors"
+                                  >
+                                    Manage Events
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Sub-section 3: Event Invitation Requests */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Event Invitation Requests
+                </h3>
+                {(() => {
+                  const items = eventRequests.filter((r) => isSameDate(r.eventDate, selectedDate));
+                  if (items.length === 0) {
+                    return (
+                      <p className="text-xs text-slate-400 bg-slate-50/50 border border-slate-100 p-3 rounded-xl">
+                        No invitation requests for this day.
+                      </p>
+                    );
+                  }
+                  return (
+                    <div className="space-y-3.5">
+                      {items.map((req) => {
+                        const isPending = req.status === "Pending";
+                        const isApproved = req.status === "Approved";
+                        const isRejected = req.status === "Rejected";
+                        
+                        // Conflict Check
+                        const otherEvents = getEventsForDate(selectedDate).filter(e => e.raw?._id !== req._id);
+
+                        return (
+                          <div
+                            key={req._id}
+                            className={`p-4 rounded-2xl border space-y-3 ${
+                              isApproved
+                                ? "bg-blue-50/50 border-blue-100 text-blue-900"
+                                : isRejected
+                                ? "bg-red-50/50 border-red-100 text-red-900"
+                                : "bg-white border-orange-100/80 shadow-sm"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-sm font-bold text-slate-800">{req.eventName}</h4>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                isApproved
+                                  ? "bg-blue-100 text-blue-700"
+                                  : isRejected
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-amber-100 text-amber-700"
+                              }`}>
+                                {req.status}
+                              </span>
+                            </div>
+
+                            <div className="space-y-1.5 text-xs text-slate-600">
+                              <div><span className="font-semibold text-slate-400">Organizer:</span> {req.eventOrganizer}</div>
+                              <div><span className="font-semibold text-slate-400">Time & Location:</span> {req.eventTime} at {req.eventLocation}</div>
+                              <div><span className="font-semibold text-slate-400">Purpose:</span> {req.description}</div>
+                              {req.contactDetails && (
+                                <div><span className="font-semibold text-slate-400">Contact:</span> {req.contactDetails}</div>
+                              )}
+                              <div><span className="font-semibold text-slate-400">Requested By:</span> User ({req.username})</div>
+                            </div>
+
+                            {isRejected && req.remark && (
+                              <div className="bg-red-50 p-2.5 rounded-xl border border-red-100 text-xs text-red-700">
+                                <span className="font-bold">Rejection Reason:</span> {req.remark}
+                              </div>
+                            )}
+
+                            {isPending && (
+                              <div className="space-y-3.5 pt-2 border-t border-slate-100">
+                                {/* Conflict Checking UI */}
+                                <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 space-y-1 text-xs">
+                                  <span className="font-bold text-slate-500 block text-[10px] uppercase tracking-wider">Conflict Checking:</span>
+                                  {otherEvents.length === 0 ? (
+                                    <span className="text-green-600 font-semibold">✓ No conflicts (0 events scheduled)</span>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      <span className="text-red-500 font-semibold">⚠ Conflict warning ({otherEvents.length} events scheduled):</span>
+                                      <ul className="list-disc pl-4 text-slate-500 text-[11px] space-y-0.5">
+                                        {otherEvents.map((evt, idx) => (
+                                          <li key={idx}>{evt.label}</li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Decision Actions */}
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleApproveRequest(req._id)}
+                                    className="flex-1 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white font-bold text-xs shadow-sm transition-colors"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => setShowRejectFormId(showRejectFormId === req._id ? null : req._id)}
+                                    className="flex-1 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold text-xs shadow-sm transition-colors"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+
+                                {showRejectFormId === req._id && (
+                                  <div className="space-y-2 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                                    <textarea
+                                      rows={2}
+                                      value={rejectionReason[req._id] || ""}
+                                      onChange={(e) => setRejectionReason((prev) => ({ ...prev, [req._id]: e.target.value }))}
+                                      placeholder="Provide an optional remark or reason..."
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-red-500"
+                                    />
+                                    <div className="flex justify-end gap-1.5">
+                                      <button
+                                        onClick={() => setShowRejectFormId(null)}
+                                        className="px-2.5 py-1 rounded text-xs text-slate-500 hover:bg-slate-100 transition-colors"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        onClick={() => handleRejectRequest(req._id)}
+                                        className="px-3 py-1 rounded bg-red-600 text-white font-bold text-xs hover:bg-red-700 transition-colors shadow-sm"
+                                      >
+                                        Confirm Reject
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>

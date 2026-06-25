@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import WorkerForm from "@/components/WorkerForm";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -34,7 +34,7 @@ export default function AddWorker() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success("Worker registered successfully!");
+        toast.success("Party Worker registered successfully!");
         setTimeout(() => {
           router.push("/admin/workers");
         }, 1500);
@@ -52,11 +52,9 @@ export default function AddWorker() {
   return (
     <>
       <Head>
-        <title>Worker Registration – Punit Joshi</title>
-        <meta name="description" content="Worker registration form for admin panel." />
+        <title>Party Worker Registration – Punit Joshi</title>
+        <meta name="description" content="Party worker registration form for admin panel." />
       </Head>
-
-      <ToastContainer position="bottom-right" autoClose={3000} theme="light" />
 
       <WorkerForm
         onSubmit={handleSubmit}
