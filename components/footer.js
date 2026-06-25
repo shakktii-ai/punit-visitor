@@ -20,7 +20,7 @@ const Footer = () => {
           </div>
           <div className="leading-tight">
             <span className="text-slate-800 font-bold text-base tracking-tight block">
-              Punit <span className="text-orange-500">Joshi</span>
+             Punit Joshi
             </span>
             <span className="text-slate-400 text-[10px] font-medium">Visitor Management</span>
           </div>

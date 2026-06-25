@@ -12,7 +12,7 @@ const Form = () => {
 
   const [formData, setFormData] = useState({
     photos: "", fullName: "", email: "", phoneNo: "", age: "", sex: "", DOB: "", aadharVoter: "",
-    houseNo: "", landmark: "", village: "", state: "", nation: "", pincode: "",
+    houseNo: "", landmark: "", village: "", pincode: "",
     purpose: "",
     patiantName: "", hospitalName: "", trackingDoctor: "", reason: "",
     studentName: "", studentDOB: "", studentGender: "", studentCategory: "", studentPhoto: "",
@@ -31,6 +31,7 @@ const Form = () => {
   // Revisit Lookup States
   const [searchPhone, setSearchPhone] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [foundVisitorName, setFoundVisitorName] = useState("");
 
   useEffect(() => {
     const userRole = localStorage.getItem("userRole");
@@ -40,19 +41,19 @@ const Form = () => {
   }, [router]);
 
   const calculateAge = (dobString) => {
-    if (!dobString) return "";
+    if (!dobString || !/^\d{4}-\d{2}-\d{2}$/.test(dobString)) return "";
     const today = new Date();
     const birthDate = new Date(dobString);
+    if (isNaN(birthDate.getTime())) return "";
     let calculatedAge = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
       calculatedAge--;
     }
-    return calculatedAge >= 0 ? calculatedAge.toString() : "";
+    return calculatedAge >= 0 && calculatedAge <= 100 ? calculatedAge.toString() : "";
   };
 
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
+  const handleTextChange = useCallback((name, value) => {
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
       if (name === "DOB") {
@@ -86,6 +87,11 @@ const Form = () => {
     });
   }, []);
 
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    handleTextChange(name, value);
+  }, [handleTextChange]);
+
   const handleFileChange = useCallback((e, fieldName) => {
     const file = e.target.files[0];
     if (file) {
@@ -116,22 +122,28 @@ const Form = () => {
           formattedDOB = new Date(data.DOB).toISOString().split("T")[0];
         }
 
-        setFormData((prev) => ({
-          ...prev,
-          ...data,
-          DOB: formattedDOB,
-          purpose: "",
-        }));
+        setFormData((prev) => {
+          const updated = {
+            ...prev,
+            ...data,
+            DOB: formattedDOB,
+            purpose: "",
+          };
+          updated.age = calculateAge(formattedDOB);
+          return updated;
+        });
 
+        setFoundVisitorName(data.fullName || "");
         setErrors({});
-        toast.success(`Welcome back, ${data.fullName}! Your profile has been pre-filled.`);
-        setCurrentStep(3);
+        toast.success(`Welcome back, ${data.fullName}! Your details have been filled.`);
       } else {
-        toast.error(data.error || "No records found. Please register as a new visitor.");
+        setFoundVisitorName("");
+        toast.error(data.error || "No record found. Please register as a new visitor.");
       }
     } catch (error) {
       console.error("Error looking up returning visitor:", error);
-      toast.error("An error occurred during lookup. Please fill manually.");
+      setFoundVisitorName("");
+      toast.error("Error looking up details. Please fill details manually.");
     } finally {
       setIsSearching(false);
     }
@@ -142,11 +154,11 @@ const Form = () => {
 
     if (step === 1) {
       if (!formData.fullName || !formData.fullName.trim()) {
-        newErrors.fullName = "Full Name is required.";
+        newErrors.fullName = "Full name is required.";
       } else if (formData.fullName.trim().length < 3) {
-        newErrors.fullName = "Full Name must be at least 3 characters.";
+        newErrors.fullName = "Full name must be at least 3 characters.";
       } else if (!/^[A-Za-z\s]+$/.test(formData.fullName.trim())) {
-        newErrors.fullName = "Full Name must contain only alphabets and spaces.";
+        newErrors.fullName = "Name must only contain English letters and spaces.";
       }
 
       if (formData.email && formData.email.trim() !== "") {
@@ -157,31 +169,40 @@ const Form = () => {
       }
 
       if (!formData.phoneNo || !formData.phoneNo.trim()) {
-        newErrors.phoneNo = "Phone Number is required.";
+        newErrors.phoneNo = "Phone number is required.";
       } else if (!/^\d{10}$/.test(formData.phoneNo.trim())) {
-        newErrors.phoneNo = "Phone Number must be exactly 10 digits.";
+        newErrors.phoneNo = "Phone number must be exactly 10 digits.";
       }
 
       if (!formData.age || formData.age.toString().trim() === "") {
         newErrors.age = "Age is required.";
       } else {
         const parsedAge = parseInt(formData.age, 10);
-        if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
-          newErrors.age = "Age must be between 1 and 120.";
+        if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 100) {
+          newErrors.age = "Age must be between 1 and 100.";
         }
       }
 
       if (!formData.sex) {
-        newErrors.sex = "Gender selection is required.";
+        newErrors.sex = "Gender is required.";
       }
 
       if (!formData.DOB) {
-        newErrors.DOB = "Date of Birth is required.";
+        newErrors.DOB = "Date of birth is required.";
       } else {
         const dobDate = new Date(formData.DOB);
         const today = new Date();
         if (dobDate > today) {
-          newErrors.DOB = "Date of Birth cannot be in the future.";
+          newErrors.DOB = "Date of birth cannot be in the future.";
+        } else {
+          let calculatedAge = today.getFullYear() - dobDate.getFullYear();
+          const m = today.getMonth() - dobDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+            calculatedAge--;
+          }
+          if (calculatedAge > 100) {
+            newErrors.DOB = "Date of birth cannot be more than 100 years ago.";
+          }
         }
       }
 
@@ -189,26 +210,20 @@ const Form = () => {
         const val = formData.aadharVoter.trim();
         if (/^\d+$/.test(val)) {
           if (val.length !== 12) {
-            newErrors.aadharVoter = "Aadhar Card must be exactly 12 digits.";
+            newErrors.aadharVoter = "Aadhaar Card must be exactly 12 digits.";
           }
         } else if (val.length < 5) {
-          newErrors.aadharVoter = "Please enter a valid Aadhar or Voter ID.";
+          newErrors.aadharVoter = "Please enter a valid Aadhaar or Voter ID.";
         }
       }
     }
 
     if (step === 2) {
       if (!formData.houseNo || !formData.houseNo.trim()) {
-        newErrors.houseNo = "House No. is required.";
+        newErrors.houseNo = "House number is required.";
       }
       if (!formData.village || !formData.village.trim()) {
-        newErrors.village = "Village / Town is required.";
-      }
-      if (!formData.state || !formData.state.trim()) {
-        newErrors.state = "State is required.";
-      }
-      if (!formData.nation || !formData.nation.trim()) {
-        newErrors.nation = "Nation is required.";
+        newErrors.village = "Village / City is required.";
       }
       if (!formData.pincode || !formData.pincode.toString().trim()) {
         newErrors.pincode = "Pincode is required.";
@@ -219,7 +234,7 @@ const Form = () => {
 
     if (step === 3) {
       if (!formData.purpose) {
-        newErrors.purpose = "Purpose of Visit is required.";
+        newErrors.purpose = "Purpose of visit is required.";
       } else {
         switch (formData.purpose) {
           case "medical":
@@ -230,9 +245,9 @@ const Form = () => {
             break;
           case "education":
             if (!formData.studentName || !formData.studentName.trim()) newErrors.studentName = "Student name is required.";
-            if (!formData.studentDOB) newErrors.studentDOB = "Student Date of Birth is required.";
-            if (!formData.studentGender) newErrors.studentGender = "Student Gender is required.";
-            if (!formData.studentCategory || !formData.studentCategory.trim()) newErrors.studentCategory = "Category is required.";
+            if (!formData.studentDOB) newErrors.studentDOB = "Student date of birth is required.";
+            if (!formData.studentGender) newErrors.studentGender = "Student gender is required.";
+            if (!formData.studentCategory || !formData.studentCategory.trim()) newErrors.studentCategory = "Caste category is required.";
             break;
           case "job": {
             const hasJobAppField = [
@@ -253,60 +268,60 @@ const Form = () => {
             ].some(val => val && val.trim() !== "");
 
             if (!hasJobAppField && !hasEmployeeField) {
-              newErrors.jobFullName = "Please complete either Job Application or Employee Transfer.";
-              newErrors.employeeName = "Please complete either Job Application or Employee Transfer.";
+              newErrors.jobFullName = "Please complete details for either Job Application or Employee Transfer.";
+              newErrors.employeeName = "Please complete details for either Job Application or Employee Transfer.";
             } else {
               if (hasJobAppField) {
-                if (!formData.jobFullName || !formData.jobFullName.trim()) newErrors.jobFullName = "Full Name is required.";
-                if (!formData.jobPosition || !formData.jobPosition.trim()) newErrors.jobPosition = "Position is required.";
+                if (!formData.jobFullName || !formData.jobFullName.trim()) newErrors.jobFullName = "Full name is required.";
+                if (!formData.jobPosition || !formData.jobPosition.trim()) newErrors.jobPosition = "Applied position is required.";
                 if (!formData.jobDepartment || !formData.jobDepartment.trim()) newErrors.jobDepartment = "Department is required.";
-                if (!formData.jobLocation || !formData.jobLocation.trim()) newErrors.jobLocation = "Preferred Location is required.";
-                if (!formData.jobSalary || !formData.jobSalary.toString().trim()) newErrors.jobSalary = "Expected Salary is required.";
+                if (!formData.jobLocation || !formData.jobLocation.trim()) newErrors.jobLocation = "Preferred location is required.";
+                if (!formData.jobSalary || !formData.jobSalary.toString().trim()) newErrors.jobSalary = "Expected salary is required.";
               }
               if (hasEmployeeField) {
-                if (!formData.employeeName || !formData.employeeName.trim()) newErrors.employeeName = "Employee Name is required.";
+                if (!formData.employeeName || !formData.employeeName.trim()) newErrors.employeeName = "Employee name is required.";
                 if (!formData.employeeId || !formData.employeeId.trim()) newErrors.employeeId = "Employee ID is required.";
                 if (!formData.employeeDepartment || !formData.employeeDepartment.trim()) newErrors.employeeDepartment = "Department is required.";
                 if (!formData.employeeDesignation || !formData.employeeDesignation.trim()) newErrors.employeeDesignation = "Designation is required.";
-                if (!formData.employeeRDepartment || !formData.employeeRDepartment.trim()) newErrors.employeeRDepartment = "Requested Department is required.";
-                if (!formData.employeeRTransfer || !formData.employeeRTransfer.trim()) newErrors.employeeRTransfer = "Requested Transfer details are required.";
+                if (!formData.employeeRDepartment || !formData.employeeRDepartment.trim()) newErrors.employeeRDepartment = "Requested department is required.";
+                if (!formData.employeeRTransfer || !formData.employeeRTransfer.trim()) newErrors.employeeRTransfer = "Transfer details are required.";
               }
             }
             break;
           }
           case "schemes":
-            if (!formData.schemeName || !formData.schemeName.trim()) newErrors.schemeName = "Scheme Name is required.";
-            if (!formData.schemeApplyDate) newErrors.schemeApplyDate = "Apply Date is required.";
-            if (!formData.schemeMaritalStatus) newErrors.schemeMaritalStatus = "Marital Status is required.";
-            if (!formData.schemeCategary || !formData.schemeCategary.trim()) newErrors.schemeCategary = "Category is required.";
+            if (!formData.schemeName || !formData.schemeName.trim()) newErrors.schemeName = "Scheme name is required.";
+            if (!formData.schemeApplyDate) newErrors.schemeApplyDate = "Application date is required.";
+            if (!formData.schemeMaritalStatus) newErrors.schemeMaritalStatus = "Marital status is required.";
+            if (!formData.schemeCategary || !formData.schemeCategary.trim()) newErrors.schemeCategary = "Caste category is required.";
             break;
           case "business":
-            if (!formData.businessName || !formData.businessName.trim()) newErrors.businessName = "Business Name is required.";
-            if (!formData.businessType || !formData.businessType.trim()) newErrors.businessType = "Business Type is required.";
-            if (!formData.businessSector || !formData.businessSector.trim()) newErrors.businessSector = "Business Sector is required.";
-            if (!formData.businessDOE) newErrors.businessDOE = "Date of Establishment is required.";
-            if (!formData.businessAddress || !formData.businessAddress.trim()) newErrors.businessAddress = "Business Address is required.";
+            if (!formData.businessName || !formData.businessName.trim()) newErrors.businessName = "Business name is required.";
+            if (!formData.businessType || !formData.businessType.trim()) newErrors.businessType = "Business type is required.";
+            if (!formData.businessSector || !formData.businessSector.trim()) newErrors.businessSector = "Business sector is required.";
+            if (!formData.businessDOE) newErrors.businessDOE = "Establishment date is required.";
+            if (!formData.businessAddress || !formData.businessAddress.trim()) newErrors.businessAddress = "Business address is required.";
             if (formData.businessGST && formData.businessGST.trim() !== "") {
               if (formData.businessGST.trim().length !== 15) {
-                newErrors.businessGST = "GST Number must be exactly 15 characters.";
+                newErrors.businessGST = "GST number must be exactly 15 characters.";
               }
             }
             break;
           case "utility":
-            if (!formData.utilityServiceInstallation || !formData.utilityServiceInstallation.trim()) newErrors.utilityServiceInstallation = "Service Installation is required.";
-            if (!formData.utilityProblem || !formData.utilityProblem.trim()) newErrors.utilityProblem = "Problem Description is required.";
+            if (!formData.utilityServiceInstallation || !formData.utilityServiceInstallation.trim()) newErrors.utilityServiceInstallation = "Service/utility type is required.";
+            if (!formData.utilityProblem || !formData.utilityProblem.trim()) newErrors.utilityProblem = "Problem description is required.";
             break;
           case "police":
-            if (!formData.policeApplicationNo || !formData.policeApplicationNo.trim()) newErrors.policeApplicationNo = "Application No. is required.";
-            if (!formData.policeApplicationDate) newErrors.policeApplicationDate = "Application Date is required.";
-            if (!formData.policeApplicationPlace || !formData.policeApplicationPlace.trim()) newErrors.policeApplicationPlace = "Application Place is required.";
-            if (!formData.policeIncidentDetails || !formData.policeIncidentDetails.trim()) newErrors.policeIncidentDetails = "Incident Details are required.";
+            if (!formData.policeApplicationNo || !formData.policeApplicationNo.trim()) newErrors.policeApplicationNo = "Complaint / application number is required.";
+            if (!formData.policeApplicationDate) newErrors.policeApplicationDate = "Application date is required.";
+            if (!formData.policeApplicationPlace || !formData.policeApplicationPlace.trim()) newErrors.policeApplicationPlace = "Application place is required.";
+            if (!formData.policeIncidentDetails || !formData.policeIncidentDetails.trim()) newErrors.policeIncidentDetails = "Detailed incident description is required.";
             if (!formData.policeDeclaration || !formData.policeDeclaration.trim()) newErrors.policeDeclaration = "Declaration is required.";
             break;
           case "administrative":
-            if (!formData.projectName || !formData.projectName.trim()) newErrors.projectName = "Project Name is required.";
-            if (!formData.projectLocation || !formData.projectLocation.trim()) newErrors.projectLocation = "Project Location is required.";
-            if (!formData.projectProblem || !formData.projectProblem.trim()) newErrors.projectProblem = "Problem Description is required.";
+            if (!formData.projectName || !formData.projectName.trim()) newErrors.projectName = "Project name is required.";
+            if (!formData.projectLocation || !formData.projectLocation.trim()) newErrors.projectLocation = "Project location is required.";
+            if (!formData.projectProblem || !formData.projectProblem.trim()) newErrors.projectProblem = "Problem description is required.";
             break;
         }
       }
@@ -342,54 +357,80 @@ const Form = () => {
     
     if (!allStepsValid) {
       setCurrentStep(firstFailedStep);
-      toast.error(`Please correct the errors on Step ${firstFailedStep} before submitting.`);
+      toast.error(`Please fix errors in Step ${firstFailedStep} before submitting.`);
       return;
     }
 
     setIsSubmitting(true);
     try {
+      const addedBy = localStorage.getItem("username") || "";
+      const payload = { ...formData, addedBy };
       const res = await fetch("/api/addform", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       const result = await res.json();
       if (res.ok) {
         toast.success("Visitor registered successfully!");
         setIsSubmitted(true);
       } else {
-        toast.error(result.error || "Submission failed.");
+        toast.error(result.error || "Failed to submit registration.");
       }
     } catch (error) {
       console.error("Error submitting form:", error);
-      toast.error("There was an error submitting the form.");
+      toast.error("An error occurred while submitting the form.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const stepLabels = ["Personal Info", "Address", "Purpose", "Review"];
+  const stepLabels = ["Personal Info", "Address", "Purpose of Visit", "Review"];
 
   const inputClass =
-    "w-full bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 p-3 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300";
+    "w-full bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 p-3 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all duration-300";
 
   const labelClass = "block text-slate-700 text-sm font-medium mb-1.5";
 
   const renderInput = (label, name, type = "text", placeholder = "") => {
     const hasError = !!errors[name];
+
     return (
       <div>
         <label className={labelClass}>{label}</label>
         <input
           type={type}
           name={name}
-          value={formData[name]}
+          value={formData[name] || ""}
           onChange={handleChange}
-          placeholder={placeholder || `Enter ${label.toLowerCase()}`}
+          placeholder={placeholder || "Enter details"}
           className={`${inputClass} ${
             hasError
               ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
               : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
+          }`}
+        />
+        {hasError && <p className="text-xs text-red-500 mt-1">{errors[name]}</p>}
+      </div>
+    );
+  };
+
+  const renderTextarea = (label, name, placeholder = "") => {
+    const hasError = !!errors[name];
+
+    return (
+      <div>
+        <label className={labelClass}>{label}</label>
+        <textarea
+          name={name}
+          rows={3}
+          value={formData[name] || ""}
+          onChange={handleChange}
+          placeholder={placeholder || "Enter details"}
+          className={`${inputClass} resize-none ${
+            hasError
+              ? "border-red-500 focus:ring-red-500/20"
+              : "border-slate-200 focus:ring-orange-500/20"
           }`}
         />
         {hasError && <p className="text-xs text-red-500 mt-1">{errors[name]}</p>}
@@ -412,7 +453,7 @@ const Form = () => {
               : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
           }`}
         >
-          <option value="">Select {label.toLowerCase()}</option>
+          <option value="">Select {label}</option>
           {options.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
@@ -477,24 +518,24 @@ const Form = () => {
       case "medical":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {renderInput("Patient Name", "patiantName")}
-            {renderInput("Hospital Name", "hospitalName")}
-            {renderInput("Tracking Doctor", "trackingDoctor")}
-            {renderInput("Reason", "reason")}
+            {renderInput("Patient Name", "patiantName", "text", "e.g. John Doe")}
+            {renderInput("Hospital Name", "hospitalName", "text", "e.g. City Hospital")}
+            {renderInput("Doctor Name", "trackingDoctor", "text", "e.g. Dr. Davis")}
+            {renderInput("Reason for Visit", "reason", "text", "e.g. Medical Checkup")}
           </div>
         );
       case "education":
         return (
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("Student Name", "studentName")}
-              {renderInput("Student DOB", "studentDOB", "date")}
+              {renderInput("Student Name", "studentName", "text", "e.g. John Doe")}
+              {renderInput("Student Date of Birth", "studentDOB", "date")}
               {renderSelect("Student Gender", "studentGender", [
                 { value: "male", label: "Male" },
                 { value: "female", label: "Female" },
                 { value: "other", label: "Other" },
               ])}
-              {renderInput("Category", "studentCategory")}
+              {renderInput("Caste Category", "studentCategory", "text", "e.g. General / OBC / SC / ST")}
             </div>
             {renderFileUpload("Student Photo", "studentPhoto")}
           </div>
@@ -504,130 +545,81 @@ const Form = () => {
           <div className="space-y-4 mt-4">
             <h4 className="text-slate-800 font-bold text-sm border-b border-orange-100 pb-1">Job Application</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("Full Name", "jobFullName")}
-              {renderInput("Position Applied For", "jobPosition")}
-              {renderInput("Department", "jobDepartment")}
-              {renderInput("Preferred Location", "jobLocation")}
-              {renderInput("Expected Salary", "jobSalary")}
+              {renderInput("Candidate Full Name", "jobFullName", "text", "e.g. John Doe")}
+              {renderInput("Applied Position", "jobPosition", "text", "e.g. Software Engineer")}
+              {renderInput("Department", "jobDepartment", "text", "e.g. IT")}
+              {renderInput("Preferred Location", "jobLocation", "text", "e.g. Springfield")}
+              {renderInput("Expected Salary", "jobSalary", "number", "e.g. 50000")}
             </div>
             <h4 className="text-slate-800 font-bold text-sm border-b border-orange-100 pb-1 pt-2">Employee Transfer</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("Employee Name", "employeeName")}
-              {renderInput("Employee ID", "employeeId")}
-              {renderInput("Department", "employeeDepartment")}
-              {renderInput("Designation", "employeeDesignation")}
-              {renderInput("Requested Department", "employeeRDepartment")}
-              {renderInput("Requested Transfer", "employeeRTransfer")}
+              {renderInput("Employee Name", "employeeName", "text", "e.g. Jane Doe")}
+              {renderInput("Employee ID", "employeeId", "text", "e.g. EMP123")}
+              {renderInput("Department", "employeeDepartment", "text", "e.g. Sales")}
+              {renderInput("Designation", "employeeDesignation", "text", "e.g. Executive")}
+              {renderInput("Requested Department", "employeeRDepartment", "text", "e.g. Marketing")}
+              {renderInput("Transfer Location/Details", "employeeRTransfer", "text", "e.g. North Branch")}
             </div>
           </div>
         );
       case "schemes":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {renderInput("Scheme Name", "schemeName")}
-            {renderInput("Previous Application", "schemePApplication")}
-            {renderInput("Apply Date", "schemeApplyDate", "date")}
+            {renderInput("Scheme Name", "schemeName", "text", "e.g. Prime Minister Scheme")}
+            {renderInput("Previous Application Details", "schemePApplication", "text", "e.g. Applied in 2025")}
+            {renderInput("Application Date", "schemeApplyDate", "date")}
             {renderSelect("Marital Status", "schemeMaritalStatus", [
               { value: "single", label: "Single" },
               { value: "married", label: "Married" },
               { value: "divorced", label: "Divorced" },
               { value: "widowed", label: "Widowed" },
             ])}
-            {renderInput("Category", "schemeCategary")}
-            {renderInput("Aadhar Number", "schemeAddhar")}
+            {renderInput("Caste Category", "schemeCategary", "text", "e.g. General")}
+            {renderInput("Aadhaar Card Number", "schemeAddhar", "text", "e.g. 123456789012")}
           </div>
         );
       case "business":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {renderInput("Business Name", "businessName")}
-            {renderInput("Business Type", "businessType")}
-            {renderInput("Business Sector", "businessSector")}
-            {renderInput("Registration No.", "businessRNo")}
-            {renderInput("Date of Establishment", "businessDOE", "date")}
-            {renderInput("GST Number", "businessGST")}
+            {renderInput("Business Name", "businessName", "text", "e.g. Acme Corp")}
+            {renderInput("Business Type", "businessType", "text", "e.g. Retail")}
+            {renderInput("Business Sector", "businessSector", "text", "e.g. Consumer Goods")}
+            {renderInput("Registration Number", "businessRNo", "text", "e.g. REG123456")}
+            {renderInput("Establishment Date", "businessDOE", "date")}
+            {renderInput("GST Number", "businessGST", "text", "e.g. 27AAAAA0000A1Z5")}
             <div className="md:col-span-2">
-              {renderInput("Business Address", "businessAddress")}
+              {renderInput("Business Address", "businessAddress", "text", "e.g. 123 Business Rd")}
             </div>
           </div>
         );
       case "utility":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {renderInput("Service Installation", "utilityServiceInstallation")}
-            {renderInput("Problem Description", "utilityProblem")}
+            {renderInput("Service / Utility Type", "utilityServiceInstallation", "text", "e.g. Water Connection")}
+            {renderInput("Problem Description", "utilityProblem", "text", "e.g. Low water pressure")}
           </div>
         );
       case "police":
         return (
           <div className="space-y-4 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("Application No.", "policeApplicationNo")}
+              {renderInput("Complaint / Application No.", "policeApplicationNo", "text", "e.g. POL98765")}
               {renderInput("Application Date", "policeApplicationDate", "date")}
-              {renderInput("Application Place", "policeApplicationPlace")}
-              {renderInput("Involved Person Name", "policeInvolveName")}
+              {renderInput("Application Place", "policeApplicationPlace", "text", "e.g. Main Police Station")}
+              {renderInput("Involved Person Name", "policeInvolveName", "text", "e.g. Robert Smith")}
             </div>
-            <div>
-              <label className={labelClass}>Incident Details</label>
-              <textarea
-                name="policeIncidentDetails"
-                value={formData.policeIncidentDetails}
-                onChange={handleChange}
-                rows={3}
-                className={`${inputClass} resize-none ${
-                  errors.policeIncidentDetails
-                    ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
-                    : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
-                }`}
-                placeholder="Describe the incident..."
-              />
-              {errors.policeIncidentDetails && (
-                <p className="text-xs text-red-500 mt-1">{errors.policeIncidentDetails}</p>
-              )}
-            </div>
-            <div>
-              <label className={labelClass}>Declaration</label>
-              <textarea
-                name="policeDeclaration"
-                value={formData.policeDeclaration}
-                onChange={handleChange}
-                rows={3}
-                className={`${inputClass} resize-none ${
-                  errors.policeDeclaration
-                    ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
-                    : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
-                }`}
-                placeholder="Your declaration..."
-              />
-              {errors.policeDeclaration && (
-                <p className="text-xs text-red-500 mt-1">{errors.policeDeclaration}</p>
-              )}
-            </div>
-            {renderFileUpload("Photo Evidence", "policePhoto")}
+            {renderTextarea("Incident Details", "policeIncidentDetails", "Write detailed incident description here...")}
+            {renderTextarea("Self Declaration", "policeDeclaration", "Write your self declaration here...")}
+            {renderFileUpload("Incident Proof or Photo", "policePhoto")}
           </div>
         );
       case "administrative":
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {renderInput("Project Name", "projectName")}
-            {renderInput("Project Location", "projectLocation")}
+            {renderInput("Project Name", "projectName", "text", "e.g. Bridge Construction")}
+            {renderInput("Project Location", "projectLocation", "text", "e.g. East River")}
             <div className="md:col-span-2">
-              <label className={labelClass}>Problem Description</label>
-              <textarea
-                name="projectProblem"
-                value={formData.projectProblem}
-                onChange={handleChange}
-                rows={3}
-                className={`${inputClass} resize-none ${
-                  errors.projectProblem
-                    ? "border-red-500 focus:ring-red-500/20 focus:border-red-500"
-                    : "border-slate-200 focus:ring-orange-500/20 focus:border-orange-500"
-                }`}
-                placeholder="Describe the problem..."
-              />
-              {errors.projectProblem && (
-                <p className="text-xs text-red-500 mt-1">{errors.projectProblem}</p>
-              )}
+              {renderTextarea("Problem Description", "projectProblem", "Write detailed problem description here...")}
             </div>
           </div>
         );
@@ -647,7 +639,7 @@ const Form = () => {
                 <div>
                   <h4 className="text-slate-800 font-bold text-sm">Returning Visitor?</h4>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Quickly pre-fill your details using your registered phone number.
+                    Quickly fill your details using your registered phone number.
                   </p>
                 </div>
               </div>
@@ -656,7 +648,18 @@ const Form = () => {
                   type="tel"
                   placeholder="Enter registered phone number..."
                   value={searchPhone}
-                  onChange={(e) => setSearchPhone(e.target.value)}
+                  onChange={(e) => {
+                    setSearchPhone(e.target.value);
+                    if (foundVisitorName) {
+                      setFoundVisitorName("");
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleRevisitLookup();
+                    }
+                  }}
                   className="flex-1 px-4 py-2.5 bg-white border border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 rounded-xl text-slate-800 placeholder-slate-400 outline-none text-sm transition-all"
                 />
                 <button
@@ -674,26 +677,35 @@ const Form = () => {
                       Searching...
                     </>
                   ) : (
-                    "Look Up Details"
+                    "Find Details"
                   )}
                 </button>
               </div>
+              {foundVisitorName && (
+                <div className="mt-3 p-3.5 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2.5 animate-fade-in shadow-sm">
+                  <HiCheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <div className="text-sm">
+                    <span className="text-slate-600">Found Name: </span>
+                    <strong className="text-slate-800 font-bold">{foundVisitorName}</strong>
+                  </div>
+                </div>
+              )}
             </div>
 
             <h3 className="text-xl font-bold text-slate-800">Personal Information</h3>
             {renderFileUpload("Photo", "photos")}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("Full Name", "fullName")}
-              {renderInput("Email", "email", "email")}
-              {renderInput("Phone Number", "phoneNo", "tel")}
-              {renderInput("Age", "age", "number")}
-              {renderSelect("Gender", "sex", [
+              {renderInput("Full Name *", "fullName", "text", "e.g. John Doe")}
+              {renderInput("Email", "email", "email", "e.g. john@example.com")}
+              {renderInput("Phone Number *", "phoneNo", "tel", "e.g. 9876543210")}
+              {renderInput("Age *", "age", "number", "e.g. 30")}
+              {renderSelect("Gender *", "sex", [
                 { value: "male", label: "Male" },
                 { value: "female", label: "Female" },
                 { value: "other", label: "Other" },
               ])}
-              {renderInput("Date of Birth", "DOB", "date")}
-              {renderInput("Aadhar / Voter ID", "aadharVoter")}
+              {renderInput("Date of Birth *", "DOB", "date")}
+              {renderInput("Aadhaar / Voter ID", "aadharVoter", "text", "Aadhaar Card or Voter ID")}
             </div>
           </div>
         );
@@ -702,12 +714,10 @@ const Form = () => {
           <div className="space-y-5">
             <h3 className="text-xl font-bold text-slate-800">Address Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {renderInput("House No.", "houseNo")}
-              {renderInput("Landmark", "landmark")}
-              {renderInput("Village / Town", "village")}
-              {renderInput("State", "state")}
-              {renderInput("Nation", "nation")}
-              {renderInput("Pincode", "pincode")}
+              {renderInput("House Number *", "houseNo", "text", "e.g. H-12")}
+              {renderInput("Landmark", "landmark", "text", "e.g. Near Temple")}
+              {renderInput("Village / City *", "village", "text", "e.g. Springfield")}
+              {renderInput("Pincode *", "pincode", "number", "e.g. 411033")}
             </div>
           </div>
         );
@@ -715,15 +725,15 @@ const Form = () => {
         return (
           <div className="space-y-5">
             <h3 className="text-xl font-bold text-slate-800">Purpose of Visit</h3>
-            {renderSelect("Purpose", "purpose", [
-              { value: "medical", label: "Medical" },
+            {renderSelect("Purpose *", "purpose", [
+              { value: "medical", label: "Medical Assistance" },
               { value: "education", label: "Education" },
               { value: "job", label: "Job" },
-              { value: "schemes", label: "Schemes" },
+              { value: "schemes", label: "Government Schemes" },
               { value: "business", label: "Business" },
-              { value: "utility", label: "Utility" },
-              { value: "police", label: "Police Station" },
-              { value: "administrative", label: "Administrative" },
+              { value: "utility", label: "Utility Service" },
+              { value: "police", label: "Police Complaint/Application" },
+              { value: "administrative", label: "Administrative Work" },
             ])}
             {renderPurposeFields()}
           </div>
@@ -731,7 +741,7 @@ const Form = () => {
       case 4:
         return (
           <div className="space-y-5">
-            <h3 className="text-xl font-bold text-slate-800">Review & Submit</h3>
+            <h3 className="text-xl font-bold text-slate-800">Review and Submit</h3>
             {isSubmitted && (
               <div className="bg-green-50 border border-green-200 rounded-2xl p-5 shadow-sm flex items-start gap-4">
                 <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center text-2xl text-green-600 flex-shrink-0">
@@ -740,25 +750,25 @@ const Form = () => {
                 <div>
                   <h4 className="text-green-800 font-bold text-base">Visitor Registered Successfully!</h4>
                   <p className="text-xs text-green-600 mt-1 leading-relaxed">
-                    The registration has been processed successfully. You can review the details below.
+                    Registration has been completed successfully. You can review the details below.
                   </p>
                 </div>
               </div>
             )}
             <div>
-              <label className={labelClass}>Additional Message</label>
+              <label className={labelClass}>Additional Message or Remarks</label>
               <textarea
                 name="message"
-                value={formData.message}
-                onChange={handleChange}
                 disabled={isSubmitted}
                 rows={4}
+                value={formData.message || ""}
+                onChange={handleChange}
                 className={`${inputClass} resize-none ${isSubmitted ? "bg-slate-50 text-slate-500 cursor-not-allowed border-slate-100" : ""}`}
-                placeholder="Any additional message or notes..."
+                placeholder="Write any additional message or remarks here..."
               />
             </div>
             <div className="bg-orange-50/30 border border-orange-100 rounded-xl p-5 space-y-3">
-              <h4 className="text-slate-800 font-bold text-sm mb-3">Summary</h4>
+              <h4 className="text-slate-800 font-bold text-sm mb-3">Registration Summary</h4>
               {formData.photos && (
                 <div className="flex justify-center mb-4">
                   <img src={formData.photos} alt="Visitor" className="w-20 h-20 rounded-full object-cover border-2 border-orange-500" />
@@ -768,18 +778,16 @@ const Form = () => {
                 {[
                   ["Name", formData.fullName],
                   ["Email", formData.email],
-                  ["Phone", formData.phoneNo],
+                  ["Phone Number", formData.phoneNo],
                   ["Age", formData.age],
-                  ["Gender", formData.sex],
-                  ["DOB", formData.DOB],
-                  ["Aadhar/Voter", formData.aadharVoter],
-                  ["House No.", formData.houseNo],
+                  ["Gender", formData.sex === "male" ? "Male" : formData.sex === "female" ? "Female" : formData.sex === "other" ? "Other" : formData.sex],
+                  ["Date of Birth", formData.DOB],
+                  ["Aadhaar / Voter ID", formData.aadharVoter],
+                  ["House Number", formData.houseNo],
                   ["Landmark", formData.landmark],
-                  ["Village", formData.village],
-                  ["State", formData.state],
-                  ["Nation", formData.nation],
+                  ["Village / City", formData.village],
                   ["Pincode", formData.pincode],
-                  ["Purpose", formData.purpose],
+                  ["Purpose of Visit", formData.purpose === "medical" ? "Medical Assistance" : formData.purpose === "education" ? "Education" : formData.purpose === "job" ? "Job" : formData.purpose === "schemes" ? "Government Schemes" : formData.purpose === "business" ? "Business" : formData.purpose === "utility" ? "Utility Service" : formData.purpose === "police" ? "Police Complaint/Application" : formData.purpose === "administrative" ? "Administrative Work" : formData.purpose],
                 ].map(([label, value]) =>
                   value ? (
                     <div key={label} className="flex justify-between py-1 border-b border-orange-100/30">
@@ -791,7 +799,7 @@ const Form = () => {
               </div>
               {formData.message && (
                 <div className="pt-2 border-t border-orange-100/50">
-                  <span className="text-slate-500 text-sm">Message: </span>
+                  <span className="text-slate-500 text-sm">Message/Remarks: </span>
                   <span className="text-slate-800 text-sm">{formData.message}</span>
                 </div>
               )}
@@ -805,13 +813,13 @@ const Form = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50/40 via-slate-50 to-orange-100/20 p-4 md:p-8">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50/40 via-slate-50 to-orange-100/20 p-5 md:p-8">
         <div className="max-w-3xl mx-auto space-y-6">
           <div className="text-center">
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+            <h1 className="text-3xl pt-3 md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
               Visitor Registration
             </h1>
-            <p className="text-slate-500 mt-2">Complete all steps to register a new visitor</p>
+            <p className="text-slate-500 mt-2 ">Complete all steps to register a new visitor</p>
           </div>
 
           <div className="flex items-center justify-between px-2">
@@ -867,7 +875,7 @@ const Form = () => {
                     onClick={() => {
                       setFormData({
                         photos: "", fullName: "", email: "", phoneNo: "", age: "", sex: "", DOB: "", aadharVoter: "",
-                        houseNo: "", landmark: "", village: "", state: "", nation: "", pincode: "",
+                        houseNo: "", landmark: "", village: "", pincode: "",
                         purpose: "",
                         patiantName: "", hospitalName: "", trackingDoctor: "", reason: "",
                         studentName: "", studentDOB: "", studentGender: "", studentCategory: "", studentPhoto: "",
@@ -881,6 +889,7 @@ const Form = () => {
                         message: "",
                       });
                       setSearchPhone("");
+                      setFoundVisitorName("");
                       setErrors({});
                       setIsSubmitted(false);
                       setCurrentStep(1);
@@ -901,7 +910,7 @@ const Form = () => {
                       className="flex items-center gap-2 px-6 py-3 rounded-xl text-slate-600 border border-slate-200 hover:bg-slate-50 bg-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <HiArrowLeft className="w-4 h-4" />
-                      Previous
+                      Back
                     </button>
                   ) : (
                     <div />

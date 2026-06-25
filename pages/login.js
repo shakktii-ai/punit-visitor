@@ -30,6 +30,7 @@ export default function Login() {
       const data = await res.json();
       if (res.ok) {
         localStorage.setItem("userRole", data.role);
+        localStorage.setItem("username", data.username || "");
         toast.success("Login successful!");
         if (data.role === "admin") {
           router.push("/admin");
@@ -68,7 +69,7 @@ export default function Login() {
           </div>
           <div className="leading-tight">
             <span className="text-slate-800 font-bold text-base tracking-tight block">
-              Punit <span className="text-orange-500">Joshi</span>
+             Punit Joshi
             </span>
             <span className="text-slate-400 text-[10px] font-medium">Visitor Management</span>
           </div>

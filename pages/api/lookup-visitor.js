@@ -37,8 +37,6 @@ export default async function handler(req, res) {
       houseNo: visitor.houseNo || "",
       landmark: visitor.landmark || "",
       village: visitor.village || "",
-      state: visitor.state || "",
-      nation: visitor.nation || "",
       pincode: visitor.pincode || "",
     };
 

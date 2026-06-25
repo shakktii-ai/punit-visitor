@@ -204,10 +204,11 @@ const DetailModal = ({ visitor, onClose }) => {
     ["House No.", visitor.houseNo],
     ["Landmark", visitor.landmark],
     ["Village / Town", visitor.village],
-    ["State", visitor.state],
-    ["Nation", visitor.nation],
     ["Pincode", visitor.pincode],
     ["Purpose", visitor.purpose],
+    ["Registered By", visitor.addedBy],
+    ["Status", visitor.status || "Pending"],
+    ["Follow-up Details", visitor.followUp || "—"],
     ["Registered On", visitor.createdAt ? new Date(visitor.createdAt).toLocaleString() : "—"],
   ].filter(([, value]) => value);
 
@@ -502,6 +503,7 @@ export default function VisitorTable() {
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Contact</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Location</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Purpose</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Status</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Date</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Actions</th>
                   </tr>
@@ -533,12 +535,26 @@ export default function VisitorTable() {
                       </td>
                       <td className="px-4 py-3">
                         <p className="text-slate-700">{v.village}</p>
-                        <p className="text-slate-400 text-xs">{v.state}</p>
+                        <p className="text-slate-400 text-xs">{v.pincode || ""}</p>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize border ${purposeColors[v.purpose] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
                           {v.purpose || "—"}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {(() => {
+                          const status = v.status || "Pending";
+                          let color = "bg-amber-100 text-amber-700 border-amber-200";
+                          if (status === "In Progress") color = "bg-blue-100 text-blue-700 border-blue-200";
+                          if (status === "Completed") color = "bg-green-100 text-green-700 border-green-200";
+                          if (status === "Rejected") color = "bg-red-100 text-red-700 border-red-200";
+                          return (
+                            <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${color}`}>
+                              {status}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
                         {v.createdAt ? new Date(v.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
@@ -553,6 +569,15 @@ export default function VisitorTable() {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => router.push(`/edit-visitor/${v._id}`)}
+                            className="p-1.5 rounded-lg hover:bg-orange-100 text-orange-500 transition-colors"
+                            title="Edit visitor"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
                           <button

@@ -27,8 +27,6 @@ const handler = async (req, res) => {
       houseNo: data.houseNo,
       landmark: data.landmark,
       village: data.village,
-      state: data.state,
-      nation: data.nation,
       pincode: data.pincode,
       purpose: data.purpose,
       patiantName: data.patiantName,
@@ -77,6 +75,9 @@ const handler = async (req, res) => {
       projectLocation: data.projectLocation,
       projectProblem: data.projectProblem,
       message: data.message,
+      addedBy: data.addedBy,
+      status: data.status || 'Pending',
+      followUp: data.followUp || '',
     });
 
     await newVisit.save();

@@ -9,6 +9,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
+    localStorage.removeItem("username");
     router.push("/login");
   };
 
@@ -27,7 +28,7 @@ const Navbar = () => {
           </div>
           <div className="leading-tight">
             <span className="text-slate-800 font-bold text-base tracking-tight block">
-              Punit <span className="text-orange-500">Joshi</span>
+                Punit Joshi
             </span>
             <span className="text-slate-400 text-[10px] font-medium">Visitor Management</span>
           </div>
@@ -50,6 +51,30 @@ const Navbar = () => {
             }`}
           >
             Register
+          </Link>
+          <Link
+            href="/my-submissions"
+            className={`text-sm font-medium transition-colors ${
+              router.pathname === "/my-submissions" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
+            }`}
+          >
+            My Submissions
+          </Link>
+          <Link
+            href="/workers"
+            className={`text-sm font-medium transition-colors ${
+              router.pathname === "/workers" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
+            }`}
+          >
+            My Workers
+          </Link>
+          <Link
+            href="/letters"
+            className={`text-sm font-medium transition-colors ${
+              router.pathname === "/letters" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
+            }`}
+          >
+            My Letters
           </Link>
           <button
             onClick={handleLogout}
@@ -93,6 +118,15 @@ const Navbar = () => {
           </Link>
           <Link href="/form" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
             Register
+          </Link>
+          <Link href="/my-submissions" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
+            My Submissions
+          </Link>
+          <Link href="/workers" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
+            My Workers
+          </Link>
+          <Link href="/letters" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
+            My Letters
           </Link>
           <button
             onClick={handleLogout}

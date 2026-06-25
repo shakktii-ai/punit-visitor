@@ -7,7 +7,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title> Punit Joshi</title>
+        <title>Punit Joshi</title>
         <meta name="description" content="Visitor Management System for Punit Joshi. Register and manage visitors efficiently." />
         <link rel="icon" href="/punit.png" />
       </Head>
@@ -27,7 +27,7 @@ export default function Home() {
               />
             </div>
             <h2 className="text-2xl font-extrabold text-slate-800">
-              Punit <span className="text-orange-500">Joshi</span>
+               Punit Joshi
             </h2>
             <span className="mt-1.5 inline-block px-4 py-1 rounded-full bg-orange-100 text-orange-600 text-xs font-semibold tracking-wide uppercase">
               Visitor Management Portal

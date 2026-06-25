@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import mongoose from "mongoose";
 import FormModel from "@/models/form";
 import { useRouter } from "next/router";
@@ -10,6 +10,13 @@ const EditVisitor = ({ visitor }) => {
   const [formData, setFormData] = useState(visitor);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const role = localStorage.getItem("userRole");
+    if (role !== "admin") {
+      router.push("/login");
+    }
+  }, [router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -222,8 +229,6 @@ const EditVisitor = ({ visitor }) => {
                 {renderInput("House No.", "houseNo")}
                 {renderInput("Landmark", "landmark")}
                 {renderInput("Village / Town", "village")}
-                {renderInput("State", "state")}
-                {renderInput("Nation", "nation")}
                 {renderInput("Pincode", "pincode")}
               </div>
             </div>
@@ -255,6 +260,29 @@ const EditVisitor = ({ visitor }) => {
                 className={inputClass + " resize-none"}
                 placeholder="Any additional message or notes..."
               />
+            </div>
+
+            <div className="bg-white border border-orange-100 rounded-3xl p-6 md:p-8 shadow-sm space-y-5">
+              <h3 className="text-lg font-bold text-slate-800 border-b border-orange-100 pb-1">Follow-up & Status</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {renderSelect("Status", "status", [
+                  { value: "Pending", label: "Pending" },
+                  { value: "In Progress", label: "In Progress" },
+                  { value: "Completed", label: "Completed" },
+                  { value: "Rejected", label: "Rejected" },
+                ])}
+              </div>
+              <div>
+                <label className={labelClass}>Follow-up Details</label>
+                <textarea
+                  name="followUp"
+                  value={formData.followUp || ""}
+                  onChange={handleChange}
+                  rows={4}
+                  className={inputClass + " resize-none"}
+                  placeholder="Enter current progress or follow-up details..."
+                />
+              </div>
             </div>
 
             <div className="flex justify-end">

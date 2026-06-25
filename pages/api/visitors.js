@@ -11,6 +11,7 @@ const handler = async (req, res) => {
         search = "",
         purpose = "",
         sort = "newest",
+        addedBy = "",
       } = req.query;
 
       const pageNum = parseInt(page, 10);
@@ -18,6 +19,10 @@ const handler = async (req, res) => {
       const skip = (pageNum - 1) * limitNum;
 
       const query = {};
+
+      if (addedBy) {
+        query.addedBy = addedBy;
+      }
 
       if (search) {
         query.$or = [
@@ -41,7 +46,7 @@ const handler = async (req, res) => {
           .skip(skip)
           .limit(limitNum)
           .select(
-            "photos fullName email phoneNo age sex DOB village state purpose createdAt aadharVoter pincode"
+            "photos fullName email phoneNo age sex DOB village purpose createdAt aadharVoter pincode addedBy status followUp"
           ),
         Form.countDocuments(query),
       ]);
