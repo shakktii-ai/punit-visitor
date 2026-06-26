@@ -11,6 +11,8 @@ const ALLOWED_USERNAMES = [
   "OPathak",
   "MKulkarni",
   "Deshmukh",
+  "NSavalgi",
+  "DJadhav",
   
 ].filter(Boolean);
 
