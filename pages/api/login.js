@@ -1,9 +1,15 @@
 import connectDb from "@/middleware/mongoose";
 
 // Hardcoded admin credentials (can be moved to env vars)
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const USER_PASSWORD = process.env.USER_PASSWORD || "123456";
+
+const ALLOWED_ADMINS = [
+  process.env.ADMIN_USERNAME,
+  "admin",
+  "MKulkarni",
+  "Deshmukh"
+].filter(Boolean);
 
 const ALLOWED_USERNAMES = [
   process.env.USER_USERNAME,
@@ -13,7 +19,6 @@ const ALLOWED_USERNAMES = [
   "Deshmukh",
   "NSavalgi",
   "DJadhav",
-  
 ].filter(Boolean);
 
 const handler = async (req, res) => {
@@ -28,7 +33,7 @@ const handler = async (req, res) => {
   }
 
   // Check admin credentials
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+  if (ALLOWED_ADMINS.includes(username) && password === ADMIN_PASSWORD) {
     return res.status(200).json({ role: "admin", username, message: "Login successful" });
   }
 

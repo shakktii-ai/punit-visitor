@@ -18,9 +18,10 @@ const handler = async (req, res) => {
       const limitNum = parseInt(limit, 10);
       const skip = (pageNum - 1) * limitNum;
 
+      const ALLOWED_ADMINS = ["admin", "MKulkarni", "Deshmukh"];
       const query = {};
 
-      if (addedBy) {
+      if (addedBy && !ALLOWED_ADMINS.includes(addedBy)) {
         query.addedBy = addedBy;
       }
 

@@ -23,16 +23,24 @@ export default function AdminEventRequests() {
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
+    const username = localStorage.getItem("username");
     if (role !== "admin") {
       router.push("/login");
+    } else if (username === "MKulkarni" || username === "Deshmukh") {
+      router.push("/admin");
     }
   }, [router]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const username = localStorage.getItem("username") || "admin";
       const [requestsRes, workersRes, todosRes] = await Promise.all([
-        fetch("/api/event-requests"),
+        fetch("/api/event-requests", {
+          headers: {
+            "x-username": username
+          }
+        }),
         fetch("/api/workers?limit=1000"),
         fetch("/api/todos")
       ]);
@@ -64,9 +72,13 @@ export default function AdminEventRequests() {
 
   const handleApproveRequest = async (reqId) => {
     try {
+      const username = localStorage.getItem("username") || "admin";
       const res = await fetch(`/api/event-requests/${reqId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-username": username
+        },
         body: JSON.stringify({ status: "Approved" }),
       });
       const data = await res.json();
@@ -84,9 +96,13 @@ export default function AdminEventRequests() {
   const handleRejectRequest = async (reqId) => {
     const remark = rejectionReason[reqId] || "";
     try {
+      const username = localStorage.getItem("username") || "admin";
       const res = await fetch(`/api/event-requests/${reqId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "x-username": username
+        },
         body: JSON.stringify({ status: "Rejected", remark }),
       });
       const data = await res.json();
@@ -106,8 +122,12 @@ export default function AdminEventRequests() {
   const handleDeleteRequest = async (reqId) => {
     if (!confirm("Are you sure you want to delete this event request permanently?")) return;
     try {
+      const username = localStorage.getItem("username") || "admin";
       const res = await fetch(`/api/event-requests/${reqId}`, {
         method: "DELETE",
+        headers: {
+          "x-username": username
+        }
       });
       const data = await res.json();
       if (res.ok && data.success) {

@@ -2,10 +2,18 @@ import EventRequest from '@/models/event-request';
 import connectDb from '@/middleware/mongoose';
 
 const handler = async (req, res) => {
+  const requestUsername = req.headers["x-username"] || req.query.username || "";
+  const RESTRICTED_ADMINS = ["MKulkarni", "Deshmukh"];
+
   // GET: Fetch event requests
   if (req.method === 'GET') {
     try {
       const { username } = req.query;
+      
+      if (RESTRICTED_ADMINS.includes(requestUsername) && !username) {
+        return res.status(403).json({ success: false, error: 'Access denied to Calendar and Event Requests.' });
+      }
+
       let query = {};
       if (username) {
         query.username = username;

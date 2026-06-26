@@ -4,6 +4,12 @@ import twilio from 'twilio';
 
 const handler = async (req, res) => {
   const { id } = req.query;
+  const requestUsername = req.headers["x-username"] || req.query.username || "";
+  const RESTRICTED_ADMINS = ["MKulkarni", "Deshmukh"];
+
+  if (RESTRICTED_ADMINS.includes(requestUsername)) {
+    return res.status(403).json({ success: false, error: 'Access denied to Calendar and Event Requests.' });
+  }
 
   if (!id) {
     return res.status(400).json({ success: false, error: 'Request ID is required.' });

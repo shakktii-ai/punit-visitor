@@ -5,6 +5,8 @@ import { uploadToCloudinary } from "@/lib/cloudinary";
 const handler = async (req, res) => {
   const role = req.headers["x-user-role"] || "";
   const username = req.headers["x-username"] || "";
+  const ALLOWED_ADMINS = ["admin", "MKulkarni", "Deshmukh"];
+  const isAdmin = role === "admin" || ALLOWED_ADMINS.includes(username);
 
   // ── GET: list letters or get single letter by ID ──────────────────────
   if (req.method === "GET") {
@@ -15,7 +17,7 @@ const handler = async (req, res) => {
         if (!letter) {
           return res.status(404).json({ success: false, error: "Letter not found." });
         }
-        if (role === "user" && (letter.createdBy !== "user" || letter.addedBy !== username)) {
+        if (!isAdmin && (letter.createdBy !== "user" || letter.addedBy !== username)) {
           return res.status(403).json({ success: false, error: "You are not authorized to view this letter." });
         }
         return res.status(200).json({ success: true, letter });
@@ -35,7 +37,7 @@ const handler = async (req, res) => {
 
       const query = {};
 
-      if (role === "user") {
+      if (role === "user" && !ALLOWED_ADMINS.includes(username)) {
         query.addedBy = username;
       } else if (addedBy) {
         query.addedBy = addedBy;
@@ -92,7 +94,7 @@ const handler = async (req, res) => {
       }
 
       // Enforce permissions: Admin can edit all, User can only edit their own
-      if (role !== "admin") {
+      if (!isAdmin) {
         if (letter.createdBy !== "user" || letter.addedBy !== username) {
           return res.status(403).json({ success: false, error: "You are not authorized to edit this letter." });
         }
@@ -139,7 +141,7 @@ const handler = async (req, res) => {
       }
 
       // Enforce permissions: Admin can delete all, User can only delete their own
-      if (role !== "admin") {
+      if (!isAdmin) {
         if (letter.createdBy !== "user" || letter.addedBy !== username) {
           return res.status(403).json({ success: false, error: "You are not authorized to delete this letter." });
         }

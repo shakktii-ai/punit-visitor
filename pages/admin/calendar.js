@@ -53,18 +53,26 @@ export default function AdminCalendar() {
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
+    const username = localStorage.getItem("username");
     if (role !== "admin") {
       router.push("/login");
+    } else if (username === "MKulkarni" || username === "Deshmukh") {
+      router.push("/admin");
     }
   }, [router]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
+      const username = localStorage.getItem("username") || "admin";
       const [workersRes, todosRes, requestsRes] = await Promise.all([
         fetch("/api/workers?limit=1000"), // Get all workers to calculate birthdays
         fetch("/api/todos"),
-        fetch("/api/event-requests")
+        fetch("/api/event-requests", {
+          headers: {
+            "x-username": username
+          }
+        })
       ]);
 
       const workersData = await workersRes.json();

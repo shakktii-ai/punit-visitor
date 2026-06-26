@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -6,6 +6,13 @@ import { useRouter } from "next/router";
 const Navbarr = () => {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setUsername(localStorage.getItem("username") || "");
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
@@ -23,6 +30,13 @@ const Navbarr = () => {
     { href: "/admin/calendar", label: "Calendar", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
     { href: "/admin/event-requests", label: "Event Requests", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" }
   ];
+
+  const filteredLinks = navLinks.filter(({ href }) => {
+    if (username === "MKulkarni" || username === "Deshmukh") {
+      return href !== "/admin/calendar" && href !== "/admin/event-requests";
+    }
+    return true;
+  });
 
   return (
     <aside
@@ -61,7 +75,7 @@ const Navbarr = () => {
 
       {/* Nav Links */}
       <nav className="flex-1 py-4 space-y-1 px-2">
-        {navLinks.map(({ href, label, icon }) => {
+        {filteredLinks.map(({ href, label, icon }) => {
           const active = router.pathname === href || router.pathname.startsWith(href + "/");
           return (
             <Link
