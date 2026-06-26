@@ -8,16 +8,10 @@ const USER_PASSWORD = process.env.USER_PASSWORD || "123456";
 const ALLOWED_USERNAMES = [
   process.env.USER_USERNAME,
   "user@gmail.com",
-  "UJadhav",
-  "YSangade",
-  "RahulKokate",
-  "MKokate",
-  "SKokate",
-  "SVavale",
-  "PDevasthali",
-  "RRaikar",
-  "RDeshpande",
-  "SBhote"
+  "OPathak",
+  "MKulkarni",
+  "Deshmukh",
+  
 ].filter(Boolean);
 
 const handler = async (req, res) => {
