@@ -541,7 +541,7 @@ const Form = () => {
         <label className={labelClass}>{label}</label>
         <div className="relative">
           {formData[fieldName] ? (
-            <div className="relative group max-w-sm mx-auto">
+            <div className="max-w-sm mx-auto space-y-3">
               <img
                 src={formData[fieldName]}
                 alt="Preview"
@@ -549,11 +549,11 @@ const Form = () => {
                   hasError ? "border-red-500" : "border-orange-100"
                 }`}
               />
-              <div className="absolute inset-0 bg-black/60 rounded-xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-3">
+              <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => document.getElementById(`file-${fieldName}`).click()}
-                  className="px-4 py-2 bg-white/95 hover:bg-white text-slate-800 font-semibold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow"
+                  className="flex-1 py-2.5 px-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 text-xs text-slate-700 font-semibold shadow-sm"
                 >
                   <HiCloudUpload className="w-4 h-4 text-orange-500" />
                   Upload New
@@ -561,7 +561,7 @@ const Form = () => {
                 <button
                   type="button"
                   onClick={() => startCamera(fieldName)}
-                  className="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow"
+                  className="flex-1 py-2.5 px-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl text-white transition-all flex items-center justify-center gap-1.5 text-xs font-semibold shadow-md shadow-orange-500/10"
                 >
                   <HiCamera className="w-4 h-4" />
                   Use Camera
@@ -737,7 +737,7 @@ const Form = () => {
                   </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="tel"
                   placeholder="Enter registered phone number..."
@@ -760,7 +760,7 @@ const Form = () => {
                   type="button"
                   onClick={handleRevisitLookup}
                   disabled={isSearching || !searchPhone}
-                  className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-orange-500/10 flex items-center gap-1.5 whitespace-nowrap"
+                  className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-orange-500/10 flex items-center justify-center gap-1.5 whitespace-nowrap w-full sm:w-auto"
                 >
                   {isSearching ? (
                     <>

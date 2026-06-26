@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/router";
 import { HiMail, HiUser, HiPhone, HiCalendar, HiArrowLeft, HiSave, HiCamera, HiCloudUpload } from "react-icons/hi";
 
@@ -45,6 +45,12 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
     }
   }, [initialData]);
 
+  const [activeCameraField, setActiveCameraField] = useState(null);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [facingMode, setFacingMode] = useState("user");
+  const [cameraError, setCameraError] = useState("");
+  const videoRef = useRef(null);
+
   const handleTextChange = useCallback((name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -66,6 +72,69 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
       reader.readAsDataURL(file);
     }
   }, []);
+
+  const stopCamera = useCallback(() => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
+    }
+    setActiveCameraField(null);
+  }, [cameraStream]);
+
+  const startCamera = async (fieldName, mode = "user") => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+    }
+    setActiveCameraField(fieldName);
+    setFacingMode(mode);
+    setCameraError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+      setCameraStream(stream);
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      setCameraError("Could not access camera. Please check permissions.");
+    }
+  };
+
+  const toggleCamera = () => {
+    const nextMode = facingMode === "user" ? "environment" : "user";
+    startCamera(activeCameraField, nextMode);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && activeCameraField) {
+      const video = videoRef.current;
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+      setFormData((prev) => ({ ...prev, [activeCameraField]: dataUrl }));
+      setErrors((prev) => ({ ...prev, [activeCameraField]: "" }));
+      stopCamera();
+    }
+  };
+
+  // Bind video stream once video element mounts
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream, activeCameraField]);
+
+  // Cleanup hooks for camera stream
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [cameraStream]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -146,7 +215,7 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
         <label className={labelClass}>{label}</label>
         <div className="relative">
           {formData[fieldName] ? (
-            <div className="relative group max-w-xs">
+            <div className="max-w-xs space-y-3">
               <img
                 src={formData[fieldName]}
                 alt="Preview"
@@ -154,24 +223,49 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
                   hasError ? "border-red-500" : "border-orange-100"
                 }`}
               />
-              <div
-                className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                onClick={() => document.getElementById(`file-${fieldName}`).click()}
-              >
-                <HiCamera className="w-8 h-8 text-white" />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById(`file-${fieldName}`).click()}
+                  className="flex-1 py-2 px-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 text-xs text-slate-700 font-semibold shadow-sm"
+                >
+                  <HiCloudUpload className="w-4 h-4 text-orange-500" />
+                  Upload New
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startCamera(fieldName)}
+                  className="flex-1 py-2 px-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl text-white transition-all flex items-center justify-center gap-1.5 text-xs font-semibold shadow-md shadow-orange-500/10"
+                >
+                  <HiCamera className="w-4 h-4" />
+                  Use Camera
+                </button>
               </div>
             </div>
           ) : (
-            <div
-              className={`w-full max-w-xs h-40 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-orange-50/20 transition-all duration-300 ${
-                hasError
-                  ? "border-red-500 hover:border-red-500/50"
-                  : "border-slate-200 hover:border-orange-500/50"
-              }`}
-              onClick={() => document.getElementById(`file-${fieldName}`).click()}
-            >
-              <HiCloudUpload className={`w-10 h-10 mb-2 ${hasError ? "text-red-400" : "text-slate-400"}`} />
-              <p className={`text-sm ${hasError ? "text-red-500" : "text-slate-500"}`}>Click to upload</p>
+            <div className={`w-full max-w-xs p-6 border-2 border-dashed rounded-xl flex flex-col items-center justify-center transition-all duration-300 ${
+              hasError
+                ? "border-red-500 bg-red-50/10"
+                : "border-slate-200 bg-slate-50/50 hover:bg-orange-50/10"
+            }`}>
+              <div className="flex flex-col gap-3 w-full mt-2">
+                <button
+                  type="button"
+                  onClick={() => document.getElementById(`file-${fieldName}`).click()}
+                  className="w-full py-2.5 px-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-orange-500/50 transition-all duration-300 flex items-center justify-center gap-2 text-sm text-slate-700 font-semibold shadow-sm"
+                >
+                  <HiCloudUpload className="w-5 h-5 text-orange-500" />
+                  Upload File
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startCamera(fieldName)}
+                  className="w-full py-2.5 px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl text-white transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-orange-500/10"
+                >
+                  <HiCamera className="w-5 h-5" />
+                  Take Photo
+                </button>
+              </div>
             </div>
           )}
           <input
@@ -275,6 +369,98 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
           </button>
         </div>
       </form>
+
+      {activeCameraField && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl overflow-hidden shadow-2xl max-w-md w-full border border-orange-100 flex flex-col">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="text-slate-800 font-bold text-base flex items-center gap-2">
+                <HiCamera className="w-5 h-5 text-orange-500" />
+                Capture Photo
+              </h3>
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-200/50"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Video Container */}
+            <div className="relative aspect-video bg-slate-950 flex items-center justify-center overflow-hidden">
+              {!cameraStream && !cameraError && (
+                <div className="flex flex-col items-center gap-2 text-slate-400">
+                  <svg className="animate-spin h-8 w-8 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <p className="text-xs">Initializing camera...</p>
+                </div>
+              )}
+              
+              {cameraError && (
+                <div className="p-6 text-center space-y-3">
+                  <p className="text-red-500 text-sm font-medium">{cameraError}</p>
+                  <button
+                    type="button"
+                    onClick={() => startCamera(activeCameraField, facingMode)}
+                    className="px-4 py-2 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+              
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className={`w-full h-full object-cover ${!cameraStream ? "hidden" : ""}`}
+                style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
+              />
+            </div>
+            
+            {/* Actions Bar */}
+            <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="px-4 py-2 text-slate-600 hover:text-slate-800 text-sm font-semibold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              
+              {cameraStream && (
+                <button
+                  type="button"
+                  onClick={capturePhoto}
+                  className="w-14 h-14 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 p-1 flex items-center justify-center shadow-lg shadow-orange-500/25 border-4 border-white transition-all transform hover:scale-105 active:scale-95"
+                  title="Capture photo"
+                >
+                  <span className="w-10 h-10 rounded-full border-2 border-white/50 block" />
+                </button>
+              )}
+              
+              <button
+                type="button"
+                disabled={!cameraStream}
+                onClick={toggleCamera}
+                className="px-3 py-2 text-orange-600 hover:text-orange-700 disabled:opacity-40 text-sm font-semibold rounded-lg flex items-center gap-1 transition-all"
+                title="Switch Camera"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3m-3-3v12" />
+                </svg>
+                Switch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
