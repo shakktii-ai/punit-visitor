@@ -23,6 +23,7 @@ const EventRequestSchema = new mongoose.Schema({
   status: { type: String, default: "Pending", enum: ["Pending", "Approved", "Rejected"] },
   remark: { type: String, default: "" },
   username: { type: String, required: true }, // The user who created the request
+  image: { type: String, default: "" },
   reminderConfig: {
     oneDayBefore: { type: Boolean, default: false },
     twoHoursBefore: { type: Boolean, default: false },

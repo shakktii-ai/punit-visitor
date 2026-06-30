@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
-import { HiPlus, HiClock, HiCheckCircle, HiXCircle, HiInformationCircle } from "react-icons/hi";
+import { HiPlus, HiClock, HiCheckCircle, HiXCircle, HiInformationCircle, HiCamera, HiCloudUpload } from "react-icons/hi";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function Invitations() {
@@ -21,7 +21,15 @@ export default function Invitations() {
     eventLocation: "",
     description: "",
     contactDetails: "",
+    image: "",
   });
+
+  // Camera states
+  const [activeCameraField, setActiveCameraField] = useState(null);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [facingMode, setFacingMode] = useState("user");
+  const [cameraError, setCameraError] = useState("");
+  const videoRef = React.useRef(null);
 
   // Reminder states (indexed by request ID)
   const [reminders, setReminders] = useState({});
@@ -74,6 +82,79 @@ export default function Invitations() {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm((prev) => ({ ...prev, image: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const stopCamera = useCallback(() => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
+    }
+    setActiveCameraField(null);
+  }, [cameraStream]);
+
+  const startCamera = async (mode = "user") => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+    }
+    setActiveCameraField("image");
+    setFacingMode(mode);
+    setCameraError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+      setCameraStream(stream);
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      setCameraError("Could not access camera. Please check permissions.");
+    }
+  };
+
+  const toggleCamera = () => {
+    const nextMode = facingMode === "user" ? "environment" : "user";
+    startCamera(nextMode);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current) {
+      const video = videoRef.current;
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+      setForm((prev) => ({ ...prev, image: dataUrl }));
+      stopCamera();
+    }
+  };
+
+  // Bind video stream once video element mounts
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [cameraStream, activeCameraField]);
+
+  // Cleanup camera stream
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [cameraStream]);
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!form.eventName || !form.eventDate || !form.eventTime || !form.eventOrganizer || !form.eventLocation || !form.description) {
@@ -106,6 +187,7 @@ export default function Invitations() {
           eventLocation: "",
           description: "",
           contactDetails: "",
+          image: "",
         });
         setActiveTab("track");
         fetchRequests();
@@ -286,6 +368,67 @@ export default function Invitations() {
               </div>
 
               <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Event Image / Invitation Card (Optional)</label>
+                <div className="relative">
+                  {form.image ? (
+                    <div className="max-w-xs space-y-3">
+                      <img
+                        src={form.image}
+                        alt="Event Preview"
+                        className="w-full h-40 object-cover rounded-xl border border-orange-100"
+                      />
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('event-image-upload').click()}
+                          className="flex-grow py-2 px-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 text-xs text-slate-700 font-semibold shadow-sm"
+                        >
+                          <HiCloudUpload className="w-4 h-4 text-orange-500" />
+                          Upload New
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startCamera()}
+                          className="flex-grow py-2 px-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl text-white transition-all flex items-center justify-center gap-1.5 text-xs font-semibold shadow-md shadow-orange-500/10"
+                        >
+                          <HiCamera className="w-4 h-4" />
+                          Use Camera
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full max-w-xs p-6 border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-orange-50/10 rounded-xl flex flex-col items-center justify-center transition-all duration-300">
+                      <div className="flex flex-col gap-3 w-full mt-2">
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('event-image-upload').click()}
+                          className="w-full py-2.5 px-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-orange-500/50 transition-all duration-300 flex items-center justify-center gap-2 text-sm text-slate-700 font-semibold shadow-sm"
+                        >
+                          <HiCloudUpload className="w-5 h-5 text-orange-500" />
+                          Upload Invitation
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startCamera()}
+                          className="w-full py-2.5 px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl text-white transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-orange-500/10"
+                        >
+                          <HiCamera className="w-5 h-5" />
+                          Take Photo
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <input
+                    id="event-image-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Contact Details of Organizer (Optional)</label>
                 <input
                   type="text"
@@ -379,6 +522,18 @@ export default function Invitations() {
                           <p className="bg-slate-50/50 p-2.5 rounded-xl border border-slate-100">{req.description}</p>
                         </div>
 
+                        {req.image && (
+                          <div className="text-xs text-slate-600">
+                            <span className="font-bold text-slate-400 uppercase tracking-wider block mb-1 text-[10px]">Invitation Card</span>
+                            <img
+                              src={req.image}
+                              alt="Invitation"
+                              className="max-w-xs h-32 object-cover rounded-xl border border-slate-100 hover:scale-105 transition-transform duration-300 cursor-pointer"
+                              onClick={() => window.open(req.image, "_blank")}
+                            />
+                          </div>
+                        )}
+
                         {req.contactDetails && (
                           <div className="text-xs text-slate-500">
                             <span className="font-bold text-slate-400 text-[10px]">Organizer Contact:</span> {req.contactDetails}
@@ -451,6 +606,97 @@ export default function Invitations() {
           </div>
         )}
       </div>
+
+      {/* Camera Capture Modal/Overlay */}
+      {activeCameraField && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl overflow-hidden shadow-2xl w-full max-w-lg border border-orange-100 flex flex-col">
+            {/* Modal Header */}
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                <HiCamera className="w-5 h-5 text-orange-500" />
+                Capture Event Photo
+              </h3>
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="text-slate-400 hover:text-slate-600 transition-colors text-sm font-semibold"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Video Preview */}
+            <div className="bg-slate-950 aspect-video relative flex items-center justify-center overflow-hidden">
+              {!cameraStream && !cameraError && (
+                <div className="flex flex-col items-center gap-2 text-slate-400">
+                  <svg className="animate-spin h-8 w-8 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <p className="text-xs">Initializing camera...</p>
+                </div>
+              )}
+              
+              {cameraError && (
+                <div className="p-6 text-center space-y-3">
+                  <p className="text-red-500 text-sm font-medium">{cameraError}</p>
+                  <button
+                    type="button"
+                    onClick={() => startCamera(facingMode)}
+                    className="px-4 py-2 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+              
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className={`w-full h-full object-cover ${!cameraStream ? "hidden" : ""}`}
+                style={{ transform: facingMode === "user" ? "scaleX(-1)" : "none" }}
+              />
+            </div>
+            
+            {/* Actions Bar */}
+            <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="px-4 py-2 text-slate-600 hover:text-slate-800 text-sm font-semibold rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              
+              {cameraStream && (
+                <button
+                  type="button"
+                  onClick={capturePhoto}
+                  className="w-14 h-14 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 p-1 flex items-center justify-center shadow-lg shadow-orange-500/25 border-4 border-white transition-all transform hover:scale-105 active:scale-95"
+                  title="Capture photo"
+                >
+                  <span className="w-10 h-10 rounded-full border-2 border-white/50 block" />
+                </button>
+              )}
+              
+              <button
+                type="button"
+                disabled={!cameraStream}
+                onClick={toggleCamera}
+                className="px-3 py-2 text-orange-600 hover:text-orange-700 disabled:opacity-40 text-sm font-semibold rounded-lg flex items-center gap-1 transition-all"
+                title="Switch Camera"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3 3 3m-3-3v12" />
+                </svg>
+                Switch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

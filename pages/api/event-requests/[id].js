@@ -1,6 +1,7 @@
 import EventRequest from '@/models/event-request';
 import connectDb from '@/middleware/mongoose';
 import twilio from 'twilio';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 const handler = async (req, res) => {
   const { id } = req.query;
@@ -15,10 +16,14 @@ const handler = async (req, res) => {
     return res.status(400).json({ success: false, error: 'Request ID is required.' });
   }
 
-  // PUT: Update a Request (Status / Rejection reason / Reminder config)
+  // PUT: Update a Request (Status / Rejection reason / Reminder config / Image update)
   if (req.method === 'PUT') {
     try {
       const updatedData = req.body;
+
+      if (updatedData.image && updatedData.image.startsWith('data:image')) {
+        updatedData.image = await uploadToCloudinary(updatedData.image, 'events/invitations');
+      }
       
       // Fetch original request to check if status is changing
       const originalRequest = await EventRequest.findById(id);

@@ -1,5 +1,6 @@
 import EventRequest from '@/models/event-request';
 import connectDb from '@/middleware/mongoose';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 const handler = async (req, res) => {
   const requestUsername = req.headers["x-username"] || req.query.username || "";
@@ -39,11 +40,14 @@ const handler = async (req, res) => {
         description,
         contactDetails,
         username,
+        image,
       } = req.body;
 
       if (!eventName || !eventDate || !eventTime || !eventOrganizer || !eventLocation || !description || !username) {
         return res.status(400).json({ success: false, error: 'All fields (except contact details) are required.' });
       }
+
+      const imageUrl = image ? await uploadToCloudinary(image, 'events/invitations') : '';
 
       const newRequest = new EventRequest({
         eventName,
@@ -54,6 +58,7 @@ const handler = async (req, res) => {
         description,
         contactDetails: contactDetails || '',
         username,
+        image: imageUrl || '',
         status: 'Pending',
         remark: '',
         reminderConfig: {
