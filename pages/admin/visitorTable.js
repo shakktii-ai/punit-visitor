@@ -349,8 +349,14 @@ export default function VisitorTable() {
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
+    const username = localStorage.getItem("username");
+    const allowedPagesStr = localStorage.getItem("allowedPages");
+    const allowedPages = allowedPagesStr ? JSON.parse(allowedPagesStr) : [];
+
     if (role !== "admin") {
       router.push("/login");
+    } else if (username !== "admin" && !allowedPages.includes("/admin/visitorTable")) {
+      router.push("/admin");
     }
   }, [router]);
 

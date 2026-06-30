@@ -179,8 +179,14 @@ export default function LettersList() {
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
+    const username = localStorage.getItem("username");
+    const allowedPagesStr = localStorage.getItem("allowedPages");
+    const allowedPages = allowedPagesStr ? JSON.parse(allowedPagesStr) : [];
+
     if (role !== "admin") {
       router.push("/login");
+    } else if (username !== "admin" && !allowedPages.includes("/admin/letters")) {
+      router.push("/admin");
     }
   }, [router]);
 

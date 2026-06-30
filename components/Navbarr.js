@@ -7,16 +7,20 @@ const Navbarr = () => {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [username, setUsername] = useState("");
+  const [allowedPages, setAllowedPages] = useState([]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setUsername(localStorage.getItem("username") || "");
+      const pagesStr = localStorage.getItem("allowedPages");
+      setAllowedPages(pagesStr ? JSON.parse(pagesStr) : []);
     }
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
     localStorage.removeItem("username");
+    localStorage.removeItem("allowedPages");
     router.push("/login");
   };
 
@@ -28,14 +32,17 @@ const Navbarr = () => {
     { href: "/admin/letters", label: "Letters List", icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
     { href: "/admin/addLetter", label: "Add Letter", icon: "M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
     { href: "/admin/calendar", label: "Calendar", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
-    { href: "/admin/event-requests", label: "Event Requests", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" }
+    { href: "/admin/event-requests", label: "Event Requests", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" },
+    { href: "/admin/permissions", label: "Permissions", icon: "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" }
   ];
 
   const filteredLinks = navLinks.filter(({ href }) => {
-    if (username === "MKulkarni" || username === "Deshmukh") {
-      return href !== "/admin/calendar" && href !== "/admin/event-requests";
-    }
-    return true;
+    if (href === "/admin/permissions") return username === "admin";
+    if (username === "admin") return true;
+    if (href === "/admin") return true;
+    if (href === "/admin/addWorker") return allowedPages.includes("/admin/workers");
+    if (href === "/admin/addLetter") return allowedPages.includes("/admin/letters");
+    return allowedPages.includes(href);
   });
 
   return (

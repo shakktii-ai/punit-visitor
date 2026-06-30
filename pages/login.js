@@ -31,6 +31,11 @@ export default function Login() {
       if (res.ok) {
         localStorage.setItem("userRole", data.role);
         localStorage.setItem("username", data.username || "");
+        if (data.allowedPages) {
+          localStorage.setItem("allowedPages", JSON.stringify(data.allowedPages));
+        } else {
+          localStorage.removeItem("allowedPages");
+        }
         toast.success("Login successful!");
         if (data.role === "admin") {
           router.push("/admin");

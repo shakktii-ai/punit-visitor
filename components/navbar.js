@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
@@ -6,12 +6,38 @@ import { useRouter } from "next/router";
 const Navbar = () => {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [allowedPages, setAllowedPages] = useState([]);
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setRole(localStorage.getItem("userRole") || "");
+      const pagesStr = localStorage.getItem("allowedPages");
+      setAllowedPages(pagesStr ? JSON.parse(pagesStr) : []);
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
     localStorage.removeItem("username");
+    localStorage.removeItem("allowedPages");
     router.push("/login");
   };
+
+  const navItems = [
+    { href: "/", label: "Home" },
+    { href: "/form", label: "Register" },
+    { href: "/my-submissions", label: "My Submissions" },
+    { href: "/workers", label: "Party Workers" },
+    { href: "/letters", label: "My Letters" },
+    { href: "/invitations", label: "Saheb Invitations" }
+  ];
+
+  const filteredLinks = navItems.filter(({ href }) => {
+    if (href === "/") return true;
+    if (role === "admin") return true;
+    return allowedPages.includes(href);
+  });
 
   return (
     <nav className="bg-white border-b border-orange-100 shadow-sm sticky top-0 z-50">
@@ -28,7 +54,7 @@ const Navbar = () => {
           </div>
           <div className="leading-tight">
             <span className="text-slate-800 font-bold text-base tracking-tight block">
-                Punit Joshi
+                 Punit Joshi
             </span>
             <span className="text-slate-400 text-[10px] font-medium">Visitor Management</span>
           </div>
@@ -36,54 +62,17 @@ const Navbar = () => {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-6">
-          <Link
-            href="/"
-            className={`text-sm font-medium transition-colors ${
-              router.pathname === "/" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
-            }`}
-          >
-            Home
-          </Link>
-          <Link
-            href="/form"
-            className={`text-sm font-medium transition-colors ${
-              router.pathname === "/form" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
-            }`}
-          >
-            Register
-          </Link>
-          <Link
-            href="/my-submissions"
-            className={`text-sm font-medium transition-colors ${
-              router.pathname === "/my-submissions" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
-            }`}
-          >
-            My Submissions
-          </Link>
-          <Link
-            href="/workers"
-            className={`text-sm font-medium transition-colors ${
-              router.pathname === "/workers" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
-            }`}
-          >
-            Party Workers
-          </Link>
-          <Link
-            href="/letters"
-            className={`text-sm font-medium transition-colors ${
-              router.pathname === "/letters" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
-            }`}
-          >
-            My Letters
-          </Link>
-          <Link
-            href="/invitations"
-            className={`text-sm font-medium transition-colors ${
-              router.pathname === "/invitations" ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
-            }`}
-          >
-            Saheb Invitations
-          </Link>
+          {filteredLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`text-sm font-medium transition-colors ${
+                router.pathname === item.href ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
           <button
             onClick={handleLogout}
             className="text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
@@ -121,24 +110,15 @@ const Navbar = () => {
               <p className="text-orange-500 text-xs">Visitor Management</p>
             </div>
           </div>
-          <Link href="/" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
-            Home
-          </Link>
-          <Link href="/form" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
-            Register
-          </Link>
-          <Link href="/my-submissions" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
-            My Submissions
-          </Link>
-          <Link href="/workers" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
-            Party Workers
-          </Link>
-          <Link href="/letters" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
-            My Letters
-          </Link>
-          <Link href="/invitations" className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors">
-            Saheb Invitations
-          </Link>
+          {filteredLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="block py-2 text-sm font-medium text-slate-700 hover:text-orange-500 transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
           <button
             onClick={handleLogout}
             className="w-full text-left py-2 text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors"

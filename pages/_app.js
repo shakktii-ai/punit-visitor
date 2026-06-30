@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import "@/styles/globals.css";
 import "react-toastify/dist/ReactToastify.css";
 import Navbar from "@/components/navbar";
@@ -11,6 +12,108 @@ export default function App({ Component, pageProps }) {
 
   const isAdminRoute = router.pathname.startsWith("/admin");
   const isLoginRoute = router.pathname === "/login";
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const role = localStorage.getItem("userRole");
+      const username = localStorage.getItem("username");
+
+      // Sync permissions from DB on mount
+      if (role === "admin" && username) {
+        fetch(`/api/permissions/user?username=${encodeURIComponent(username)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.allowedPages) {
+              localStorage.setItem("allowedPages", JSON.stringify(data.allowedPages));
+            }
+          })
+          .catch((err) => console.error("Error syncing permissions:", err));
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && !isLoginRoute) {
+      const role = localStorage.getItem("userRole");
+      const username = localStorage.getItem("username");
+      const allowedPagesStr = localStorage.getItem("allowedPages");
+      const allowedPages = allowedPagesStr ? JSON.parse(allowedPagesStr) : [];
+
+      if (isAdminRoute) {
+        if (role !== "admin") {
+          router.push("/login");
+        } else if (username !== "admin" && router.pathname !== "/admin") {
+          const hasAccess = (path) => {
+            if (path.startsWith("/admin/visitorTable") || path.startsWith("/admin/edit-visitor")) {
+              return allowedPages.includes("/admin/visitorTable");
+            }
+            if (path.startsWith("/admin/workers") || path.startsWith("/admin/addWorker") || path.startsWith("/admin/edit-worker")) {
+              return allowedPages.includes("/admin/workers");
+            }
+            if (path.startsWith("/admin/letters") || path.startsWith("/admin/addLetter") || path.startsWith("/admin/edit-letter")) {
+              return allowedPages.includes("/admin/letters");
+            }
+            if (path.startsWith("/admin/calendar")) {
+              return allowedPages.includes("/admin/calendar");
+            }
+            if (path.startsWith("/admin/event-requests")) {
+              return allowedPages.includes("/admin/event-requests");
+            }
+            if (path.startsWith("/admin/permissions")) {
+              return false;
+            }
+            return false;
+          };
+
+          if (!hasAccess(router.pathname)) {
+            router.push("/admin");
+          }
+        }
+      } else {
+        // User routes check
+        const isUserRoute = 
+          router.pathname === "/form" ||
+          router.pathname === "/my-submissions" ||
+          router.pathname.startsWith("/workers") ||
+          router.pathname.startsWith("/addWorker") ||
+          router.pathname.startsWith("/edit-worker") ||
+          router.pathname.startsWith("/letters") ||
+          router.pathname.startsWith("/addLetter") ||
+          router.pathname.startsWith("/edit-letter") ||
+          router.pathname.startsWith("/invitations");
+
+        if (isUserRoute) {
+          if (role !== "user" && role !== "admin") {
+            router.push("/login");
+          } else if (role === "user") {
+            const hasAccess = (path) => {
+              if (path === "/form") return allowedPages.includes("/form");
+              if (path === "/my-submissions") return allowedPages.includes("/my-submissions");
+              if (path.startsWith("/workers") || path.startsWith("/addWorker") || path.startsWith("/edit-worker")) {
+                return allowedPages.includes("/workers");
+              }
+              if (path.startsWith("/letters") || path.startsWith("/addLetter") || path.startsWith("/edit-letter")) {
+                return allowedPages.includes("/letters");
+              }
+              if (path.startsWith("/invitations")) {
+                return allowedPages.includes("/invitations");
+              }
+              return true;
+            };
+
+            if (!hasAccess(router.pathname)) {
+              const firstAllowed = allowedPages.find(p => p.startsWith("/"));
+              if (firstAllowed) {
+                router.push(firstAllowed);
+              } else {
+                router.push("/login");
+              }
+            }
+          }
+        }
+      }
+    }
+  }, [router.pathname, isAdminRoute, isLoginRoute]);
 
   if (isLoginRoute) {
     return (

@@ -54,9 +54,12 @@ export default function AdminCalendar() {
   useEffect(() => {
     const role = localStorage.getItem("userRole");
     const username = localStorage.getItem("username");
+    const allowedPagesStr = localStorage.getItem("allowedPages");
+    const allowedPages = allowedPagesStr ? JSON.parse(allowedPagesStr) : [];
+
     if (role !== "admin") {
       router.push("/login");
-    } else if (username === "MKulkarni" || username === "Deshmukh") {
+    } else if (username !== "admin" && !allowedPages.includes("/admin/calendar")) {
       router.push("/admin");
     }
   }, [router]);
