@@ -53,6 +53,9 @@ export default function App({ Component, pageProps }) {
             if (path.startsWith("/admin/letters") || path.startsWith("/admin/addLetter") || path.startsWith("/admin/edit-letter")) {
               return allowedPages.includes("/admin/letters");
             }
+            if (path.startsWith("/admin/inward-letters") || path.startsWith("/admin/addInwardLetter") || path.startsWith("/admin/edit-inward-letter")) {
+              return allowedPages.includes("/admin/inward-letters");
+            }
             if (path.startsWith("/admin/calendar")) {
               return allowedPages.includes("/admin/calendar");
             }
@@ -80,6 +83,9 @@ export default function App({ Component, pageProps }) {
           router.pathname.startsWith("/letters") ||
           router.pathname.startsWith("/addLetter") ||
           router.pathname.startsWith("/edit-letter") ||
+          router.pathname.startsWith("/inward-letters") ||
+          router.pathname.startsWith("/addInwardLetter") ||
+          router.pathname.startsWith("/edit-inward-letter") ||
           router.pathname.startsWith("/invitations");
 
         if (isUserRoute) {
@@ -94,6 +100,9 @@ export default function App({ Component, pageProps }) {
               }
               if (path.startsWith("/letters") || path.startsWith("/addLetter") || path.startsWith("/edit-letter")) {
                 return allowedPages.includes("/letters");
+              }
+              if (path.startsWith("/inward-letters") || path.startsWith("/addInwardLetter") || path.startsWith("/edit-inward-letter")) {
+                return allowedPages.includes("/inward-letters");
               }
               if (path.startsWith("/invitations")) {
                 return allowedPages.includes("/invitations");

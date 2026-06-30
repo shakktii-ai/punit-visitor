@@ -6,7 +6,8 @@ import { toast } from "react-toastify";
 const ADMIN_MODULES = [
   { path: "/admin/visitorTable", label: "Manage Visitors", description: "Access the visitors list and detail views", icon: "" },
   { path: "/admin/workers", label: "Manage Party Workers", description: "Register, edit, and view party workers", icon: "" },
-  { path: "/admin/letters", label: "Manage Letters", description: "Inward correspondence and tracking lists", icon: "" },
+  { path: "/admin/inward-letters", label: "Manage Inward Letters", description: "Access registry and manage inward correspondence", icon: "" },
+  { path: "/admin/letters", label: "Manage Outward Letters", description: "Access outward correspondence registry", icon: "" },
   { path: "/admin/calendar", label: "Access Calendar", description: "View schedule, birthdays, and anniversaries", icon: "" },
   { path: "/admin/event-requests", label: "Manage Event Requests", description: "Approve or reject invitation requests", icon: "" }
 ];
@@ -15,7 +16,8 @@ const USER_MODULES = [
   { path: "/form", label: "Register Form", description: "Submit new visitor entries", icon: "" },
   { path: "/my-submissions", label: "My Submissions", description: "View self-submitted entries history", icon: "" },
   { path: "/workers", label: "Party Workers", description: "Register or view party workers profile", icon: "" },
-  { path: "/letters", label: "My Letters", description: "Submit and track inward letter submissions", icon: "" },
+  { path: "/inward-letters", label: "Inward Letters", description: "Submit and track inward letter registrations", icon: "" },
+  { path: "/letters", label: "Outward Letters", description: "Submit and track outward letter registrations", icon: "" },
   { path: "/invitations", label: "Saheb Invitations", description: "Access the Saheb invitations list", icon: "" }
 ];
 

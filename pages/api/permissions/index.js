@@ -42,7 +42,9 @@ const handler = async (req, res) => {
           "/admin/workers",
           "/admin/addWorker",
           "/admin/letters",
-          "/admin/addLetter"
+          "/admin/addLetter",
+          "/admin/inward-letters",
+          "/admin/addInwardLetter"
         ],
         isDynamic: dbUserSet.has(u)
       }));
@@ -54,6 +56,7 @@ const handler = async (req, res) => {
           "/my-submissions",
           "/workers",
           "/letters",
+          "/inward-letters",
           "/invitations"
         ],
         isDynamic: dbUserSet.has(u)

@@ -29,7 +29,8 @@ const Navbar = () => {
     { href: "/form", label: "Register" },
     { href: "/my-submissions", label: "My Submissions" },
     { href: "/workers", label: "Party Workers" },
-    { href: "/letters", label: "My Letters" },
+    { href: "/inward-letters", label: "Inward Letters" },
+    { href: "/letters", label: "Outward Letters" },
     { href: "/invitations", label: "Saheb Invitations" }
   ];
 
