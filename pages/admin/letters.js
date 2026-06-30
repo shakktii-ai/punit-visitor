@@ -23,7 +23,7 @@ const DetailModal = ({ letter, onClose }) => {
       title: "1. Core Details",
       fields: [
         ["Subject", letter.subject],
-        ["Inward Number", letter.inwardNumber],
+        ["Outward Number", letter.inwardNumber],
         ["Addressed To", letter.letterAddressedTo || "—"],
         ["Department", letter.department || "—"],
         ["Description", letter.details || "—"],
@@ -76,7 +76,7 @@ const DetailModal = ({ letter, onClose }) => {
                   {letter.subject}
                 </h2>
                 <span className="inline-flex mt-1 text-xs px-2.5 py-0.5 rounded-full font-medium bg-slate-50 border border-slate-200 text-slate-600">
-                  Inward No: {letter.inwardNumber}
+                  Outward No: {letter.inwardNumber}
                 </span>
               </div>
             </div>
@@ -138,7 +138,7 @@ const ConfirmModal = ({ letter, onConfirm, onCancel }) => (
       <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4 text-red-500 text-2xl">
         ⚠️
       </div>
-      <h3 className="text-slate-800 font-bold text-lg mb-2">Delete Letter?</h3>
+      <h3 className="text-slate-800 font-bold text-lg mb-2">Delete Outward Letter?</h3>
       <p className="text-slate-500 text-sm mb-6 leading-relaxed">
         Are you sure you want to delete the letter <span className="font-semibold text-slate-700">"{letter.subject}"</span>? This action cannot be undone.
       </p>
@@ -251,17 +251,17 @@ export default function LettersList() {
   return (
     <>
       <Head>
-        <title>Letters List – Admin Panel</title>
-        <meta name="description" content="Manage and view all inward letters." />
+        <title>Outward Letters List – Admin Panel</title>
+        <meta name="description" content="Manage and view all outward letters." />
       </Head>
 
       <div className="p-4 md:p-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800">Inward Letters Manager</h1>
+            <h1 className="text-2xl font-bold text-slate-800">Outward Letters Manager</h1>
             <p className="text-slate-500 text-sm mt-0.5">
-              Total {total} letters registered
+              Total {total} outward letters registered
             </p>
           </div>
           <div className="flex gap-2.5">
@@ -277,7 +277,7 @@ export default function LettersList() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
             >
               <HiPlus className="w-4.5 h-4.5" />
-              New Letter
+              New Outward Letter
             </button>
           </div>
         </div>
@@ -289,7 +289,7 @@ export default function LettersList() {
             <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by subject, inward number, department or assignee..."
+              placeholder="Search by subject, outward number, department or assignee..."
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
@@ -325,7 +325,7 @@ export default function LettersList() {
                   <tr>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">#</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">Subject</th>
-                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">Inward Number</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">Outward Number</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">Department</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">Assigned To</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3.5">Registered By</th>

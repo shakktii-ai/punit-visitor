@@ -294,10 +294,10 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
         </button>
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800">
-            {initialData ? "Edit Letter Details" : "Letter Registration Form"}
+            {initialData ? "Edit Outward Letter Details" : "Outward Letter Registration Form"}
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">
-            {initialData ? "Update registered letter details" : "Register inward letters and details associated with them"}
+            {initialData ? "Update registered outward letter details" : "Register outward letters and details associated with them"}
           </p>
         </div>
       </div>
@@ -307,7 +307,7 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
         <div className="bg-white rounded-3xl border border-orange-100 p-6 md:p-8 shadow-sm space-y-5">
           <div className="flex items-center gap-2.5 pb-2 border-b border-orange-50">
             <HiCamera className="w-5 h-5 text-orange-500" />
-            <h2 className="text-base font-bold text-slate-800">1. Letter Image / Proof (Letter Document)</h2>
+            <h2 className="text-base font-bold text-slate-800">1. Outward Letter Image / Proof</h2>
           </div>
           {renderFileUpload("Document Photo", "photo")}
         </div>
@@ -320,7 +320,7 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {renderInput("Subject *", "subject", "text", "e.g. Road Repair Request")}
-            {renderInput("Inward Number *", "inwardNumber", "text", "e.g. IN/2026/102")}
+            {renderInput("Outward Number *", "inwardNumber", "text", "e.g. OUT/2026/102")}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {renderInput("Letter Addressed To", "letterAddressedTo", "text", "e.g. Municipal Commissioner")}
