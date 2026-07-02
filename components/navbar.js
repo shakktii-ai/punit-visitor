@@ -74,12 +74,21 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
-          <button
-            onClick={handleLogout}
-            className="text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
-          >
-            Logout
-          </button>
+          {role ? (
+            <button
+              onClick={handleLogout}
+              className="text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
+            >
+              Login
+            </Link>
+          )}
         </div>
 
         {/* Mobile Hamburger */}
@@ -120,12 +129,21 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
-          <button
-            onClick={handleLogout}
-            className="w-full text-left py-2 text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors"
-          >
-            Logout
-          </button>
+          {role ? (
+            <button
+              onClick={handleLogout}
+              className="w-full text-left py-2 text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="block w-full text-left py-2 text-sm font-semibold text-orange-500 hover:text-orange-600 transition-colors"
+            >
+              Login
+            </Link>
+          )}
         </div>
       )}
     </nav>
