@@ -55,19 +55,17 @@ const Navbarr = () => {
       }`}
     >
       {/* Profile Header */}
-      <div className={`flex items-center border-b border-orange-50 ${
-        collapsed ? "justify-center py-4 px-2" : "gap-3 px-4 py-4"
+      <div className={`flex border-b border-orange-50 ${
+        collapsed ? "flex-col-reverse items-center gap-3 py-4 px-2" : "items-center gap-3 px-4 py-4"
       }`}>
-        {!collapsed && (
-          <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-400 shadow-md flex-shrink-0">
-            <Image
-              src="/punit.png"
-              alt="Punit Joshi"
-              fill
-              className="object-cover"
-            />
-          </div>
-        )}
+        <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-400 shadow-md flex-shrink-0">
+          <Image
+            src="/punit.png"
+            alt="Punit Joshi"
+            fill
+            className="object-cover"
+          />
+        </div>
         {!collapsed && (
           <div className="leading-tight min-w-0 flex-1">
             <p className="text-slate-800 font-bold text-sm whitespace-nowrap">
