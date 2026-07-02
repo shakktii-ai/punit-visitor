@@ -55,17 +55,21 @@ const Navbarr = () => {
       }`}
     >
       {/* Profile Header */}
-      <div className="flex items-center gap-3 px-4 py-4 border-b border-orange-50">
-        <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-400 shadow-md flex-shrink-0">
-          <Image
-            src="/punit.png"
-            alt="Punit Joshi"
-            fill
-            className="object-cover"
-          />
-        </div>
+      <div className={`flex items-center border-b border-orange-50 ${
+        collapsed ? "justify-center py-4 px-2" : "gap-3 px-4 py-4"
+      }`}>
         {!collapsed && (
-          <div className="leading-tight min-w-0">
+          <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-400 shadow-md flex-shrink-0">
+            <Image
+              src="/punit.png"
+              alt="Punit Joshi"
+              fill
+              className="object-cover"
+            />
+          </div>
+        )}
+        {!collapsed && (
+          <div className="leading-tight min-w-0 flex-1">
             <p className="text-slate-800 font-bold text-sm whitespace-nowrap">
                 Punit Joshi
             </p>
@@ -74,7 +78,7 @@ const Navbarr = () => {
         )}
         <button
           onClick={() => setCollapsed((v) => !v)}
-          className="ml-auto p-1 rounded-lg text-slate-400 hover:bg-orange-50 hover:text-orange-500 transition-colors flex-shrink-0"
+          className="p-1 rounded-lg text-slate-400 hover:bg-orange-50 hover:text-orange-500 transition-colors flex-shrink-0"
           aria-label="Toggle sidebar"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +95,9 @@ const Navbarr = () => {
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
+              className={`flex items-center rounded-xl text-sm font-medium transition-all duration-200 group ${
+                collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5"
+              } ${
                 active
                   ? "bg-gradient-to-r from-orange-500/10 to-amber-500/10 text-orange-600 border border-orange-200/50"
                   : "text-slate-600 hover:bg-orange-50 hover:text-orange-600"
