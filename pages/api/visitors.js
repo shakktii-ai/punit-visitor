@@ -29,9 +29,8 @@ const handler = async (req, res) => {
         query.$or = [
           { fullName:  { $regex: search, $options: "i" } },
           { phoneNo:   { $regex: search, $options: "i" } },
-          { email:     { $regex: search, $options: "i" } },
+          { address:   { $regex: search, $options: "i" } },
           { village:   { $regex: search, $options: "i" } },
-          { aadharVoter: { $regex: search, $options: "i" } },
         ];
       }
 
@@ -47,7 +46,7 @@ const handler = async (req, res) => {
           .skip(skip)
           .limit(limitNum)
           .select(
-            "photos fullName email phoneNo age sex DOB village purpose createdAt aadharVoter pincode addedBy status followUp"
+            "photos fullName email phoneNo age sex DOB village purpose createdAt aadharVoter pincode addedBy status followUp address"
           ),
         Form.countDocuments(query),
       ]);

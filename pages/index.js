@@ -35,17 +35,7 @@ export default function Home() {
           </div>
 
           {/* Hero text */}
-          <h1 className="text-4xl md:text-5xl font-extrabold text-slate-800 leading-tight mb-4">
-            Manage Your Visitors{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-500">
-              Effortlessly
-            </span>
-          </h1>
-
-          <p className="text-slate-500 text-lg mb-10 leading-relaxed">
-            A smart visitor management system to register, track, and manage visitor information
-            quickly and securely — from personal details to purpose of visit.
-          </p>
+         
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -53,7 +43,7 @@ export default function Home() {
               href="/form"
               className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold text-sm shadow-lg shadow-orange-500/25 transition-all"
             >
-              Register as Visitor
+              Office Login
             </Link>
             <Link
               href="/login"
@@ -63,23 +53,7 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Feature cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-16">
-            {[
-              { icon: "", title: "Easy Registration", desc: "Multi-step form for smooth visitor onboarding." },
-              { icon: "", title: "Purpose Tracking", desc: "Record visit purpose — medical, education, business & more." },
-              { icon: "", title: "Secure & Fast", desc: "Role-based access for admins and visitors." },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="bg-white rounded-2xl border border-orange-100 p-5 shadow-sm text-left hover:shadow-md hover:border-orange-200 transition-all"
-              >
-                {/* <span className="text-2xl mb-3 block">{f.icon}</span> */}
-                <h3 className="font-bold text-slate-800 text-sm mb-1">{f.title}</h3>
-                <p className="text-slate-500 text-xs leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
+          
 
         </div>
       </main>

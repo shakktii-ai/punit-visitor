@@ -3,7 +3,35 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 
-const PURPOSES = ["medical", "education", "job", "schemes", "business", "utility", "police", "administrative"];
+const PURPOSES = [
+  "MEET WITH DADA",
+  "ROAD",
+  "FOOTPATH",
+  "DRAINAGE",
+  "WATER",
+  "STORM WATER CRISIS",
+  "WASTE MANAGEMENT",
+  "FOLLIAGE MANAGEMENT",
+  "DEBRIS MANAGEMENT",
+  "TREE CUTTING",
+  "STREET LIGHTS",
+  "DEATH INTIMATION LETTER",
+  "JOB REFERENCE LETTER",
+  "MSEB",
+  "BIRTH & DEATH CERTIFICATE CORRECTION",
+  "RECOMONDATION LETTER",
+  "ADMISSION LETTER",
+  "toilet",
+  "medical assit.",
+  "ambulance",
+  "ration kit",
+  "Monitery Help",
+  "chairty",
+  "in kind help",
+  "tanker",
+  "SCHOOL / COLLEGE FEE LETTER",
+  "Other"
+];
 
 const purposeColors = {
   medical:        "bg-red-100 text-red-600 border-red-200",
@@ -193,23 +221,26 @@ const purposeColors = {
 const DetailModal = ({ visitor, onClose }) => {
   if (!visitor) return null;
 
+  const combinedAddress = visitor.address || [
+    visitor.houseNo,
+    visitor.landmark,
+    visitor.village,
+    visitor.pincode ? String(visitor.pincode) : ""
+  ].filter((val) => val && val.trim() !== "").join(", ");
+
   const fields = [
     ["Full Name", visitor.fullName],
-    ["Email", visitor.email],
     ["Phone", visitor.phoneNo],
-    ["Age", visitor.age],
-    ["Gender", visitor.sex],
-    ["Date of Birth", visitor.DOB ? new Date(visitor.DOB).toLocaleDateString() : "—"],
-    ["Aadhar / Voter ID", visitor.aadharVoter],
-    ["House No.", visitor.houseNo],
-    ["Landmark", visitor.landmark],
-    ["Village / Town", visitor.village],
-    ["Pincode", visitor.pincode],
-    ["Purpose", visitor.purpose],
+    ["Gender", visitor.sex === "male" ? "Male" : visitor.sex === "female" ? "Female" : visitor.sex === "other" ? "Other" : visitor.sex],
+    ["Address", combinedAddress],
+    ["Nature of Work", visitor.purpose],
+    ...(visitor.customPurpose ? [["Nature of Work Details", visitor.customPurpose]] : []),
+    ...(visitor.purpose === "DRAINAGE" && visitor.subPurpose ? [["Drainage Sub-Type", visitor.subPurpose]] : []),
+    ...(visitor.purpose === "DRAINAGE" && visitor.customSubPurpose ? [["Drainage Details", visitor.customSubPurpose]] : []),
     ["Registered By", visitor.addedBy],
     ["Status", visitor.status || "Pending"],
     ["Follow-up Details", visitor.followUp || "—"],
-    ["Registered On", visitor.createdAt ? new Date(visitor.createdAt).toLocaleString() : "—"],
+    ["Registered On", visitor.createdAt ? new Date(visitor.createdAt).toLocaleString("en-IN") : "—"],
   ].filter(([, value]) => value);
 
   return (
@@ -242,8 +273,9 @@ const DetailModal = ({ visitor, onClose }) => {
                   {visitor.fullName}
                 </h2>
 
-                <span className="inline-flex mt-1 px-3 py-1 text-xs rounded-full bg-red-100 text-red-600">
+                <span className="inline-flex mt-1 px-3 py-1 text-xs rounded-full bg-orange-100 text-orange-700 font-semibold">
                   {visitor.purpose}
+                  {visitor.purpose === "DRAINAGE" && visitor.subPurpose ? ` - ${visitor.subPurpose}` : ""}
                 </span>
               </div>
             </div>
@@ -506,8 +538,8 @@ export default function VisitorTable() {
                   <tr>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">#</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Visitor</th>
-                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Contact</th>
-                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Location</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Phone</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Address</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Purpose</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Status</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Date</th>
@@ -531,21 +563,22 @@ export default function VisitorTable() {
                           )}
                           <div>
                             <p className="text-slate-800 font-medium">{v.fullName}</p>
-                            <p className="text-slate-400 text-xs">{v.age ? `${v.age} yrs` : ""} {v.sex ? `· ${v.sex}` : ""}</p>
+                            <p className="text-slate-400 text-xs capitalize">{v.sex || ""}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <p className="text-slate-700">{v.phoneNo}</p>
-                        <p className="text-slate-400 text-xs truncate max-w-[140px]">{v.email}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="text-slate-700">{v.village}</p>
-                        <p className="text-slate-400 text-xs">{v.pincode || ""}</p>
+                        <p className="text-slate-700 truncate max-w-[200px]" title={v.address || [v.houseNo, v.landmark, v.village, v.pincode].filter(Boolean).join(", ")}>
+                          {v.address || [v.houseNo, v.landmark, v.village, v.pincode].filter(Boolean).join(", ")}
+                        </p>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize border ${purposeColors[v.purpose] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                          {v.purpose || "—"}
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize border bg-orange-50 text-orange-700 border-orange-200`}>
+                          {v.purpose}
+                          {v.purpose === "DRAINAGE" && v.subPurpose ? ` - ${v.subPurpose}` : ""}
                         </span>
                       </td>
                       <td className="px-4 py-3">

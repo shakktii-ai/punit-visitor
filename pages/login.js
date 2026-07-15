@@ -58,27 +58,32 @@ export default function Login() {
         <title>Login – VisitorPass</title>
         <meta name="description" content="Login to access the VisitorPass system." />
       </Head>
+      
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-slate-50 to-amber-50 flex items-center justify-center p-4">
+        
         <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <Link href="/" className="flex flex-col items-center justify-center gap-2.5">
+              <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-orange-400 shadow-md shadow-orange-500/20 flex-shrink-0">
+                <Image
+                  src="/punit.png"
+                  alt="Punit Joshi"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="leading-tight">
+                <span className="text-slate-800 text-center font-bold text-lg tracking-tight block">
+                 Punit Joshi
+                </span>
+                <span className="text-slate-400 text-[15px] text-center font-medium">Visitor Management</span>
+              </div>
+            </Link>
+          </div>
           {/* Card */}
           <div className="bg-white rounded-3xl shadow-xl shadow-orange-500/10 border border-orange-100 p-8 md:p-10">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2.5">
-          <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-400 shadow-md shadow-orange-500/20 flex-shrink-0">
-            <Image
-              src="/punit.png"
-              alt="Punit Joshi"
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div className="leading-tight">
-            <span className="text-slate-800 font-bold text-base tracking-tight block">
-             Punit Joshi
-            </span>
-            <span className="text-slate-400 text-[10px] font-medium">Visitor Management</span>
-          </div>
-        </Link>
+           
 
             <h2 className="text-2xl font-bold text-slate-800 mb-1">Welcome back</h2>
             <p className="text-sm text-slate-500 mb-8">Sign in to continue to the portal</p>

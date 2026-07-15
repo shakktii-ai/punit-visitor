@@ -26,8 +26,8 @@ const Navbar = () => {
 
   const navItems = [
     { href: "/", label: "Home" },
-    { href: "/form", label: "Register" },
-    { href: "/my-submissions", label: "My Submissions" },
+    { href: "/form", label: "Visitor Entry" },
+    { href: "/my-submissions", label: "My Entry's" },
     { href: "/workers", label: "Party Workers" },
     { href: "/inward-letters", label: "Inward Letters" },
     { href: "/letters", label: "Outward Letters" },
@@ -37,6 +37,9 @@ const Navbar = () => {
   const filteredLinks = navItems.filter(({ href }) => {
     if (href === "/") return true;
     if (role === "admin") return true;
+    if (role === "user" && (href === "/workers" || href === "/letters" || href === "/inward-letters")) {
+      return false;
+    }
     return allowedPages.includes(href);
   });
 

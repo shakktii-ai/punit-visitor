@@ -12,14 +12,8 @@ export default async function handler(req, res) {
     }
 
     try {
-      if (updatedData.photos) {
+      if (updatedData.photos && updatedData.photos.startsWith('data:image')) {
         updatedData.photos = await uploadToCloudinary(updatedData.photos, 'visitors/photos');
-      }
-      if (updatedData.studentPhoto) {
-        updatedData.studentPhoto = await uploadToCloudinary(updatedData.studentPhoto, 'visitors/studentPhotos');
-      }
-      if (updatedData.policePhoto) {
-        updatedData.policePhoto = await uploadToCloudinary(updatedData.policePhoto, 'visitors/policePhotos');
       }
 
       const visitor = await Form.findByIdAndUpdate(id, updatedData, { new: true });

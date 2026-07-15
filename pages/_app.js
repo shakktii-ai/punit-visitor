@@ -44,6 +44,9 @@ export default function App({ Component, pageProps }) {
           router.push("/login");
         } else if (username !== "admin" && router.pathname !== "/admin") {
           const hasAccess = (path) => {
+            if (path.startsWith("/admin/search")) {
+              return true;
+            }
             if (path.startsWith("/admin/visitorTable") || path.startsWith("/admin/edit-visitor")) {
               return allowedPages.includes("/admin/visitorTable");
             }
@@ -93,17 +96,17 @@ export default function App({ Component, pageProps }) {
             router.push("/login");
           } else if (role === "user") {
             const hasAccess = (path) => {
-              if (path === "/form") return allowedPages.includes("/form");
-              if (path === "/my-submissions") return allowedPages.includes("/my-submissions");
               if (path.startsWith("/workers") || path.startsWith("/addWorker") || path.startsWith("/edit-worker")) {
-                return allowedPages.includes("/workers");
+                return false;
               }
               if (path.startsWith("/letters") || path.startsWith("/addLetter") || path.startsWith("/edit-letter")) {
-                return allowedPages.includes("/letters");
+                return false;
               }
               if (path.startsWith("/inward-letters") || path.startsWith("/addInwardLetter") || path.startsWith("/edit-inward-letter")) {
-                return allowedPages.includes("/inward-letters");
+                return false;
               }
+              if (path === "/form") return allowedPages.includes("/form");
+              if (path === "/my-submissions") return allowedPages.includes("/my-submissions");
               if (path.startsWith("/invitations")) {
                 return allowedPages.includes("/invitations");
               }

@@ -76,8 +76,6 @@ const handler = async (req, res) => {
       allowedPages = [
         "/form",
         "/my-submissions",
-        "/workers",
-        "/letters",
         "/invitations"
       ];
     }
@@ -105,8 +103,6 @@ const handler = async (req, res) => {
         allowedPages = [
           "/form",
           "/my-submissions",
-          "/workers",
-          "/letters",
           "/invitations"
         ];
       }

@@ -26,6 +26,7 @@ const Navbarr = () => {
 
   const navLinks = [
     { href: "/admin", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+    { href: "/admin/search", label: "Global Search", icon: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" },
     { href: "/admin/visitorTable", label: "Visitors", icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" },
     { href: "/admin/workers", label: "Party Workers", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
     { href: "/admin/addWorker", label: "Add Party Worker", icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" },
@@ -42,6 +43,7 @@ const Navbarr = () => {
     if (href === "/admin/permissions") return username === "admin";
     if (username === "admin") return true;
     if (href === "/admin") return true;
+    if (href === "/admin/search") return true;
     if (href === "/admin/addWorker") return allowedPages.includes("/admin/workers");
     if (href === "/admin/addLetter") return allowedPages.includes("/admin/letters");
     if (href === "/admin/addInwardLetter") return allowedPages.includes("/admin/inward-letters");

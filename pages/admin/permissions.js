@@ -13,11 +13,8 @@ const ADMIN_MODULES = [
 ];
 
 const USER_MODULES = [
-  { path: "/form", label: "Register Form", description: "Submit new visitor entries", icon: "" },
-  { path: "/my-submissions", label: "My Submissions", description: "View self-submitted entries history", icon: "" },
-  { path: "/workers", label: "Party Workers", description: "Register or view party workers profile", icon: "" },
-  { path: "/inward-letters", label: "Inward Letters", description: "Submit and track inward letter registrations", icon: "" },
-  { path: "/letters", label: "Outward Letters", description: "Submit and track outward letter registrations", icon: "" },
+  { path: "/form", label: "Visitor Entry", description: "Submit new visitor entries", icon: "" },
+  { path: "/my-submissions", label: "My Entry's", description: "View self-submitted entries history", icon: "" },
   { path: "/invitations", label: "Saheb Invitations", description: "Access the Saheb invitations list", icon: "" }
 ];
 

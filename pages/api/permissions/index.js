@@ -54,9 +54,6 @@ const handler = async (req, res) => {
         allowedPages: recordMap[u] || [
           "/form",
           "/my-submissions",
-          "/workers",
-          "/letters",
-          "/inward-letters",
           "/invitations"
         ],
         isDynamic: dbUserSet.has(u)

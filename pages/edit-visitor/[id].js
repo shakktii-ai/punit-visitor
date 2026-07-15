@@ -7,7 +7,15 @@ import "react-toastify/dist/ReactToastify.css";
 import { HiSave, HiArrowLeft } from "react-icons/hi";
 
 const EditVisitor = ({ visitor }) => {
-  const [formData, setFormData] = useState(visitor);
+  const [formData, setFormData] = useState({
+    ...visitor,
+    address: visitor.address || [
+      visitor.houseNo,
+      visitor.landmark,
+      visitor.village,
+      visitor.pincode ? String(visitor.pincode) : ""
+    ].filter((val) => val && val.trim() !== "").join(", ")
+  });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -20,7 +28,16 @@ const EditVisitor = ({ visitor }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === "purpose") {
+        updated.subPurpose = "";
+        updated.customPurpose = "";
+      } else if (name === "subPurpose") {
+        updated.customPurpose = "";
+      }
+      return updated;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -84,97 +101,6 @@ const EditVisitor = ({ visitor }) => {
     </div>
   );
 
-  const renderPurposeFields = () => {
-    const purpose = formData.purpose;
-    switch (purpose) {
-      case "medical":
-        return (
-          <>
-            {renderInput("Patient Name", "patiantName")}
-            {renderInput("Hospital Name", "hospitalName")}
-            {renderInput("Tracking Doctor", "trackingDoctor")}
-            {renderInput("Reason", "reason")}
-          </>
-        );
-      case "education":
-        return (
-          <>
-            {renderInput("Student Name", "studentName")}
-            {renderInput("Student DOB", "studentDOB", "date")}
-            {renderInput("Student Gender", "studentGender")}
-            {renderInput("Category", "studentCategory")}
-          </>
-        );
-      case "job":
-        return (
-          <>
-            {renderInput("Full Name", "jobFullName")}
-            {renderInput("Position", "jobPosition")}
-            {renderInput("Department", "jobDepartment")}
-            {renderInput("Location", "jobLocation")}
-            {renderInput("Expected Salary", "jobSalary")}
-            {renderInput("Employee Name", "employeeName")}
-            {renderInput("Employee ID", "employeeId")}
-            {renderInput("Employee Department", "employeeDepartment")}
-            {renderInput("Designation", "employeeDesignation")}
-            {renderInput("Requested Department", "employeeRDepartment")}
-            {renderInput("Requested Transfer", "employeeRTransfer")}
-          </>
-        );
-      case "schemes":
-        return (
-          <>
-            {renderInput("Scheme Name", "schemeName")}
-            {renderInput("Previous Application", "schemePApplication")}
-            {renderInput("Apply Date", "schemeApplyDate", "date")}
-            {renderInput("Marital Status", "schemeMaritalStatus")}
-            {renderInput("Category", "schemeCategary")}
-            {renderInput("Aadhar", "schemeAddhar")}
-          </>
-        );
-      case "business":
-        return (
-          <>
-            {renderInput("Business Name", "businessName")}
-            {renderInput("Business Type", "businessType")}
-            {renderInput("Business Sector", "businessSector")}
-            {renderInput("Registration No.", "businessRNo")}
-            {renderInput("Date of Establishment", "businessDOE", "date")}
-            {renderInput("GST Number", "businessGST")}
-            {renderInput("Business Address", "businessAddress")}
-          </>
-        );
-      case "utility":
-        return (
-          <>
-            {renderInput("Service Installation", "utilityServiceInstallation")}
-            {renderInput("Problem", "utilityProblem")}
-          </>
-        );
-      case "police":
-        return (
-          <>
-            {renderInput("Application No.", "policeApplicationNo")}
-            {renderInput("Application Date", "policeApplicationDate", "date")}
-            {renderInput("Application Place", "policeApplicationPlace")}
-            {renderInput("Incident Details", "policeIncidentDetails")}
-            {renderInput("Involved Person", "policeInvolveName")}
-            {renderInput("Declaration", "policeDeclaration")}
-          </>
-        );
-      case "administrative":
-        return (
-          <>
-            {renderInput("Project Name", "projectName")}
-            {renderInput("Project Location", "projectLocation")}
-            {renderInput("Problem", "projectProblem")}
-          </>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-orange-50/40 via-slate-50 to-orange-100/20 p-4 md:p-8">
@@ -209,56 +135,85 @@ const EditVisitor = ({ visitor }) => {
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {renderInput("Full Name", "fullName")}
-                {renderInput("Email", "email", "email")}
                 {renderInput("Phone Number", "phoneNo", "tel")}
-                {renderInput("Age", "age", "number")}
                 {renderSelect("Gender", "sex", [
                   { value: "male", label: "Male" },
                   { value: "female", label: "Female" },
                   { value: "other", label: "Other" },
                 ])}
-                {renderInput("Date of Birth", "DOB", "date")}
-                {renderInput("Aadhar / Voter ID", "aadharVoter")}
+                {renderSelect("Nature of Work", "purpose", [
+                  { value: "MEET WITH DADA", label: "MEET WITH DADA" },
+                  { value: "ROAD", label: "ROAD" },
+                  { value: "FOOTPATH", label: "FOOTPATH" },
+                  { value: "DRAINAGE", label: "DRAINAGE" },
+                  { value: "WATER", label: "WATER" },
+                  { value: "STORM WATER CRISIS", label: "STORM WATER CRISIS" },
+                  { value: "WASTE MANAGEMENT", label: "WASTE MANAGEMENT" },
+                  { value: "FOLLIAGE MANAGEMENT", label: "FOLLIAGE MANAGEMENT" },
+                  { value: "DEBRIS MANAGEMENT", label: "DEBRIS MANAGEMENT" },
+                  { value: "TREE CUTTING", label: "TREE CUTTING" },
+                  { value: "STREET LIGHTS", label: "STREET LIGHTS" },
+                  { value: "DEATH INTIMATION LETTER", label: "DEATH INTIMATION LETTER" },
+                  { value: "JOB REFERENCE LETTER", label: "JOB REFERENCE LETTER" },
+                  { value: "MSEB", label: "MSEB" },
+                  { value: "BIRTH & DEATH CERTIFICATE CORRECTION", label: "BIRTH & DEATH CERTIFICATE CORRECTION" },
+                  { value: "RECOMONDATION LETTER", label: "RECOMONDATION LETTER" },
+                  { value: "ADMISSION LETTER", label: "ADMISSION LETTER" },
+                  { value: "toilet", label: "toilet" },
+                  { value: "medical assit.", label: "medical assit." },
+                  { value: "ambulance", label: "ambulance" },
+                  { value: "ration kit", label: "ration kit" },
+                  { value: "Monitery Help", label: "Monitery Help" },
+                  { value: "chairty", label: "chairty" },
+                  { value: "in kind help", label: "in kind help" },
+                  { value: "tanker", label: "tanker" },
+                  { value: "SCHOOL / COLLEGE FEE LETTER", label: "SCHOOL / COLLEGE FEE LETTER" },
+                  { value: "Other", label: "Other" }
+                ])}
               </div>
-            </div>
 
-            <div className="bg-white border border-orange-100 rounded-3xl p-6 md:p-8 shadow-sm space-y-5">
-              <h3 className="text-lg font-bold text-slate-800 border-b border-orange-100 pb-1">Address</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {renderInput("House No.", "houseNo")}
-                {renderInput("Landmark", "landmark")}
-                {renderInput("Village / Town", "village")}
-                {renderInput("Pincode", "pincode")}
+              {formData.purpose && (
+                <div className="mt-4">
+                  {renderInput(
+                    `Nature of Work Details ${formData.purpose === "Other" ? "(Required)" : "(Optional)"}`,
+                    "customPurpose"
+                  )}
+                </div>
+              )}
+
+              {formData.purpose === "DRAINAGE" && (
+                <div className="mt-4">
+                  {renderSelect("Drainage Sub-Type", "subPurpose", [
+                    { value: "ROUND CHAMBER", label: "ROUND CHAMBER" },
+                    { value: "RECTANGLE CHAMBER", label: "RECTANGLE CHAMBER" },
+                    { value: "LINE CHANGE", label: "LINE CHANGE" },
+                    { value: "REPAIR WORK", label: "REPAIR WORK" },
+                    { value: "JETTING REQUIRED", label: "JETTING REQUIRED" },
+                    { value: "Other", label: "Other" }
+                  ])}
+                </div>
+              )}
+
+              {formData.purpose === "DRAINAGE" && formData.subPurpose && (
+                <div className="mt-4">
+                  {renderInput(
+                    `Drainage Details ${formData.subPurpose === "Other" ? "(Required)" : "(Optional)"}`,
+                    "customSubPurpose"
+                  )}
+                </div>
+              )}
+
+              <div className="mt-4">
+                <label className={labelClass}>Address</label>
+                <textarea
+                  name="address"
+                  value={formData.address || ""}
+                  onChange={handleChange}
+                  rows={3}
+                  className={`${inputClass} resize-none`}
+                  placeholder="Enter complete address details"
+                />
               </div>
-            </div>
-
-            <div className="bg-white border border-orange-100 rounded-3xl p-6 md:p-8 shadow-sm space-y-5">
-              <h3 className="text-lg font-bold text-slate-800 border-b border-orange-100 pb-1">Purpose Details</h3>
-              {renderSelect("Purpose", "purpose", [
-                { value: "medical", label: "Medical" },
-                { value: "education", label: "Education" },
-                { value: "job", label: "Job" },
-                { value: "schemes", label: "Schemes" },
-                { value: "business", label: "Business" },
-                { value: "utility", label: "Utility" },
-                { value: "police", label: "Police Station" },
-                { value: "administrative", label: "Administrative" },
-              ])}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {renderPurposeFields()}
-              </div>
-            </div>
-
-            <div className="bg-white border border-orange-100 rounded-3xl p-6 md:p-8 shadow-sm space-y-5">
-              <h3 className="text-lg font-bold text-slate-800 border-b border-orange-100 pb-1">Message</h3>
-              <textarea
-                name="message"
-                value={formData.message || ""}
-                onChange={handleChange}
-                rows={4}
-                className={inputClass + " resize-none"}
-                placeholder="Any additional message or notes..."
-              />
             </div>
 
             <div className="bg-white border border-orange-100 rounded-3xl p-6 md:p-8 shadow-sm space-y-5">

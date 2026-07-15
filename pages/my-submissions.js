@@ -5,14 +5,33 @@ import { toast } from "react-toastify";
 import { HiCheckCircle, HiClock, HiExclamation, HiXCircle, HiSearch, HiFilter, HiEye } from "react-icons/hi";
 
 const PURPOSES = [
-  { value: "medical", label: "Medical Assistance" },
-  { value: "education", label: "Education" },
-  { value: "job", label: "Job" },
-  { value: "schemes", label: "Government Schemes" },
-  { value: "business", label: "Business" },
-  { value: "utility", label: "Utility Service" },
-  { value: "police", label: "Police Complaint/Application" },
-  { value: "administrative", label: "Administrative Work" }
+  { value: "MEET WITH DADA", label: "MEET WITH DADA" },
+  { value: "ROAD", label: "ROAD" },
+  { value: "FOOTPATH", label: "FOOTPATH" },
+  { value: "DRAINAGE", label: "DRAINAGE" },
+  { value: "WATER", label: "WATER" },
+  { value: "STORM WATER CRISIS", label: "STORM WATER CRISIS" },
+  { value: "WASTE MANAGEMENT", label: "WASTE MANAGEMENT" },
+  { value: "FOLLIAGE MANAGEMENT", label: "FOLLIAGE MANAGEMENT" },
+  { value: "DEBRIS MANAGEMENT", label: "DEBRIS MANAGEMENT" },
+  { value: "TREE CUTTING", label: "TREE CUTTING" },
+  { value: "STREET LIGHTS", label: "STREET LIGHTS" },
+  { value: "DEATH INTIMATION LETTER", label: "DEATH INTIMATION LETTER" },
+  { value: "JOB REFERENCE LETTER", label: "JOB REFERENCE LETTER" },
+  { value: "MSEB", label: "MSEB" },
+  { value: "BIRTH & DEATH CERTIFICATE CORRECTION", label: "BIRTH & DEATH CERTIFICATE CORRECTION" },
+  { value: "RECOMONDATION LETTER", label: "RECOMONDATION LETTER" },
+  { value: "ADMISSION LETTER", label: "ADMISSION LETTER" },
+  { value: "toilet", label: "toilet" },
+  { value: "medical assit.", label: "medical assit." },
+  { value: "ambulance", label: "ambulance" },
+  { value: "ration kit", label: "ration kit" },
+  { value: "Monitery Help", label: "Monitery Help" },
+  { value: "chairty", label: "chairty" },
+  { value: "in kind help", label: "in kind help" },
+  { value: "tanker", label: "tanker" },
+  { value: "SCHOOL / COLLEGE FEE LETTER", label: "SCHOOL / COLLEGE FEE LETTER" },
+  { value: "Other", label: "Other" }
 ];
 
 const purposeColors = {
@@ -75,21 +94,25 @@ const DetailModal = ({ visitor, onClose }) => {
     return sex || "—";
   };
 
+  const combinedAddress = visitor.address || [
+    visitor.houseNo,
+    visitor.landmark,
+    visitor.village,
+    visitor.pincode ? String(visitor.pincode) : ""
+  ].filter((val) => val && val.trim() !== "").join(", ");
+
+  const displayPurpose = visitor.purpose === "Other" && visitor.customPurpose ? visitor.customPurpose : visitor.purpose;
+  const displaySubPurpose = visitor.purpose === "DRAINAGE" && visitor.subPurpose === "Other" && visitor.customPurpose ? visitor.customPurpose : visitor.subPurpose;
+
   const fields = [
     ["Name", visitor.fullName],
-    ["Email", visitor.email],
     ["Phone Number", visitor.phoneNo],
-    ["Age", visitor.age],
     ["Gender", getGenderText(visitor.sex)],
-    ["Date of Birth (DOB)", visitor.DOB ? new Date(visitor.DOB).toLocaleDateString("en-US") : "—"],
-    ["Aadhaar / Voter ID", visitor.aadharVoter],
-    ["House Number", visitor.houseNo],
-    ["Landmark", visitor.landmark],
-    ["Village / City", visitor.village],
-    ["Pincode", visitor.pincode],
-    ["Purpose of Visit", purposeLabels[visitor.purpose] || visitor.purpose],
+    ["Address", combinedAddress],
+    ["Nature of Work", displayPurpose],
+    ...(visitor.purpose === "DRAINAGE" && displaySubPurpose ? [["Drainage Sub-Type", displaySubPurpose]] : []),
     ["Status", getStatusText(visitor.status)],
-    ["Registered On", visitor.createdAt ? new Date(visitor.createdAt).toLocaleString("en-US") : "—"],
+    ["Registered On", visitor.createdAt ? new Date(visitor.createdAt).toLocaleString("en-IN") : "—"],
   ].filter(([, value]) => value);
 
   return (
@@ -120,8 +143,9 @@ const DetailModal = ({ visitor, onClose }) => {
                 <h2 className="text-lg font-bold text-slate-800 leading-tight">
                   {visitor.fullName}
                 </h2>
-                <span className={`inline-flex mt-1.5 text-xs px-2 py-0.5 rounded-full font-medium border ${purposeColors[visitor.purpose] || "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                  {purposeLabels[visitor.purpose] || visitor.purpose}
+                <span className={`inline-flex mt-1.5 text-xs px-2 py-0.5 rounded-full font-semibold border bg-orange-50 text-orange-700 border-orange-200`}>
+                  {visitor.purpose === "Other" && visitor.customPurpose ? visitor.customPurpose : visitor.purpose}
+                  {visitor.purpose === "DRAINAGE" && visitor.subPurpose ? ` - ${visitor.subPurpose === "Other" && visitor.customPurpose ? visitor.customPurpose : visitor.subPurpose}` : ""}
                 </span>
               </div>
             </div>
@@ -268,14 +292,14 @@ export default function MySubmissions() {
   return (
     <>
       <Head>
-        <title>My Submissions – Punit Joshi</title>
+        <title>My Entry's – Punit Joshi</title>
         <meta name="description" content="Track status and progress of visitor forms submitted by you." />
       </Head>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10 space-y-6">
         {/* Title */}
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800">My Submissions</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800">My Entry's</h1>
           <p className="text-slate-500 text-sm mt-1">
             View details, current status, and follow-up remarks of visitors registered by you.
           </p>
@@ -340,71 +364,56 @@ export default function MySubmissions() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {submissions.map((v) => (
-              <div
-                key={v._id}
-                className="bg-white rounded-2xl border border-orange-100/70 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden group hover:border-orange-200"
-              >
-                {/* Status bar */}
-                <div className="px-5 py-3.5 bg-slate-50 border-b border-orange-50/50 flex justify-between items-center">
-                  <span className="text-xs text-slate-400 font-semibold">
-                    {v.createdAt ? new Date(v.createdAt).toLocaleDateString("en-US") : ""}
-                  </span>
-                  {getStatusBadge(v.status)}
-                </div>
-
-                {/* Body details */}
-                <div className="p-5 flex-grow space-y-4">
-                  <div className="flex items-center gap-3">
-                    {v.photos ? (
-                      <img
-                        src={v.photos}
-                        alt={v.fullName}
-                        className="w-11 h-11 rounded-full object-cover border border-orange-100 flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-amber-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                        {v.fullName?.[0]?.toUpperCase() || "?"}
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <h3 className="font-bold text-slate-800 text-sm truncate group-hover:text-orange-500 transition-colors">
-                        {v.fullName}
-                      </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">Village/City: {v.village || "—"}</p>
-                    </div>
-                  </div>
-
-                  {/* Purpose Info */}
-                  <div className="flex flex-wrap items-center justify-between text-xs pt-1">
-                    <span className="text-slate-400">Purpose:</span>
-                    <span className={`px-2.5 py-0.5 rounded-full font-medium border ${purposeColors[v.purpose] || "bg-slate-100 text-slate-600 border-slate-200"}`}>
-                      {purposeLabels[v.purpose] || v.purpose}
-                    </span>
-                  </div>
-
-                  {/* Progress log section */}
-                  <div className="bg-slate-50/70 border border-slate-100 rounded-xl p-3.5 space-y-1 mt-2">
-                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Follow-up Notes</p>
-                    <p className="text-xs font-semibold text-slate-700 line-clamp-2 leading-relaxed">
-                      {v.followUp || "Work progress will be updated here soon."}
-                    </p>
-                  </div>
-                </div>
-
-                {/* View Action */}
-                <div className="px-5 pb-5 pt-0">
-                  <button
-                    onClick={() => setSelectedVisitor(v)}
-                    className="w-full py-2.5 rounded-xl border border-orange-200/60 hover:bg-orange-50 text-orange-600 text-xs font-bold transition-all flex items-center justify-center gap-1.5 group-hover:border-orange-300"
-                  >
-                    <HiEye className="w-4 h-4" />
-                    View Details
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div className="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-orange-50/60 border-b border-orange-100">
+                  <tr>
+                    <th className="px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Visitor Name</th>
+                    <th className="px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nature of Work</th>
+                    <th className="px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {submissions.map((v) => (
+                    <tr
+                      key={v._id}
+                      onClick={() => setSelectedVisitor(v)}
+                      className="hover:bg-orange-50/20 transition-colors cursor-pointer"
+                    >
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          {v.photos ? (
+                            <img
+                              src={v.photos}
+                              alt={v.fullName}
+                              className="w-9 h-9 rounded-full object-cover border border-orange-100 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-amber-400 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                              {v.fullName?.[0]?.toUpperCase() || "?"}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-bold text-slate-800 text-sm">{v.fullName}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{v.phoneNo || ""}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="text-xs font-medium text-slate-600">
+                          {v.purpose}
+                          {v.purpose === "DRAINAGE" && v.subPurpose ? ` - ${v.subPurpose}` : ""}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        {getStatusBadge(v.status)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 

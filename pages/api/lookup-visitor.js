@@ -24,20 +24,24 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "No previous records found for this phone number." });
     }
 
-    // Extract only personal and address details to pre-fill the form
+    // Combine legacy address fields if address is not present
+    const combinedAddress = visitor.address || [
+      visitor.houseNo,
+      visitor.landmark,
+      visitor.village,
+      visitor.pincode ? String(visitor.pincode) : ""
+    ].filter((val) => val && val.trim() !== "").join(", ");
+
     const responseData = {
       photos: visitor.photos || "",
       fullName: visitor.fullName || "",
-      email: visitor.email || "",
       phoneNo: visitor.phoneNo || "",
-      age: visitor.age || "",
       sex: visitor.sex || "",
-      DOB: visitor.DOB || "",
-      aadharVoter: visitor.aadharVoter || "",
-      houseNo: visitor.houseNo || "",
-      landmark: visitor.landmark || "",
-      village: visitor.village || "",
-      pincode: visitor.pincode || "",
+      address: combinedAddress,
+      purpose: visitor.purpose || "",
+      subPurpose: visitor.subPurpose || "",
+      customPurpose: visitor.customPurpose || "",
+      customSubPurpose: visitor.customSubPurpose || "",
     };
 
     return res.status(200).json(responseData);
