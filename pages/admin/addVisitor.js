@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import Head from "next/head";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
-import { HiCamera as HiCameraIcon, HiCloudUpload as HiCloudUploadIcon, HiCheckCircle, HiArrowRight } from "react-icons/hi";
+import { HiCamera as HiCameraIcon, HiCloudUpload as HiCloudUploadIcon, HiCheckCircle, HiArrowLeft } from "react-icons/hi";
 
-const Form = () => {
+const AddVisitor = () => {
   const router = useRouter();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,9 +35,15 @@ const Form = () => {
   const videoRef = useRef(null);
 
   useEffect(() => {
-    const userRole = localStorage.getItem("userRole");
-    if (userRole !== "user" && userRole !== "admin") {
+    const role = localStorage.getItem("userRole");
+    const username = localStorage.getItem("username");
+    const allowedPagesStr = localStorage.getItem("allowedPages");
+    const allowedPages = allowedPagesStr ? JSON.parse(allowedPagesStr) : [];
+
+    if (role !== "admin") {
       router.push("/login");
+    } else if (username !== "admin" && !allowedPages.includes("/admin/visitorTable")) {
+      router.push("/admin");
     }
   }, [router]);
 
@@ -157,7 +164,7 @@ const Form = () => {
 
         setFoundVisitorName(data.fullName || "");
         setErrors({});
-        toast.success(`Welcome back, ${data.fullName}! Your details have been filled.`);
+        toast.success(`Welcome back, ${data.fullName}! Details have been pre-filled.`);
       } else {
         setFormData({
           photos: "",
@@ -260,7 +267,7 @@ const Form = () => {
 
     setIsSubmitting(true);
     try {
-      const addedBy = localStorage.getItem("username") || "";
+      const addedBy = localStorage.getItem("username") || "admin";
       const payload = { ...formData, addedBy };
       const res = await fetch("/api/addform", {
         method: "POST",
@@ -289,13 +296,28 @@ const Form = () => {
 
   return (
     <>
+      <Head>
+        <title>Add Visitor – VisitorPass Admin</title>
+        <meta name="description" content="Register a new visitor in the admin database." />
+      </Head>
+
       <div className="min-h-screen bg-gradient-to-br from-orange-50/40 via-slate-50 to-orange-100/20 p-5 md:p-8">
         <div className="max-w-2xl mx-auto space-y-6">
-          <div className="text-center">
-            <h1 className="text-3xl pt-3 md:text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
-              Visitor Registration
-            </h1>
-            <p className="text-slate-500 mt-2">Fill the details below to register a visitor</p>
+          
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => router.push("/admin/visitorTable")}
+              className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all duration-300"
+            >
+              <HiArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+                Add Visitor
+              </h1>
+              <p className="text-slate-500 text-sm mt-1">Register a new visitor</p>
+            </div>
           </div>
 
           {/* Lookup Panel */}
@@ -382,7 +404,14 @@ const Form = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => router.push("/admin/visitorTable")}
+                  className="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold transition-all"
+                >
+                  View All Visitors
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -393,6 +422,9 @@ const Form = () => {
                       sex: "",
                       address: "",
                       purpose: "",
+                      subPurpose: "",
+                      customPurpose: "",
+                      customSubPurpose: "",
                     });
                     setSearchPhone("");
                     setFoundVisitorName("");
@@ -734,4 +766,4 @@ const Form = () => {
   );
 };
 
-export default Form;
+export default AddVisitor;

@@ -47,11 +47,11 @@ export default function App({ Component, pageProps }) {
             if (path.startsWith("/admin/search")) {
               return true;
             }
-            if (path.startsWith("/admin/visitorTable") || path.startsWith("/admin/edit-visitor")) {
+            if (path.startsWith("/admin/visitorTable") || path.startsWith("/admin/addVisitor") || path.startsWith("/admin/edit-visitor")) {
               return allowedPages.includes("/admin/visitorTable");
             }
             if (path.startsWith("/admin/workers") || path.startsWith("/admin/addWorker") || path.startsWith("/admin/edit-worker")) {
-              return allowedPages.includes("/admin/workers");
+              return false;
             }
             if (path.startsWith("/admin/letters") || path.startsWith("/admin/addLetter") || path.startsWith("/admin/edit-letter")) {
               return allowedPages.includes("/admin/letters");

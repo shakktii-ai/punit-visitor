@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 
 const ADMIN_MODULES = [
   { path: "/admin/visitorTable", label: "Manage Visitors", description: "Access the visitors list and detail views", icon: "" },
-  { path: "/admin/workers", label: "Manage Party Workers", description: "Register, edit, and view party workers", icon: "" },
   { path: "/admin/inward-letters", label: "Manage Inward Letters", description: "Access registry and manage inward correspondence", icon: "" },
   { path: "/admin/letters", label: "Manage Outward Letters", description: "Access outward correspondence registry", icon: "" },
   { path: "/admin/calendar", label: "Access Calendar", description: "View schedule, birthdays, and anniversaries", icon: "" },

@@ -27,7 +27,7 @@ const Navbar = () => {
   const navItems = [
     { href: "/", label: "Home" },
     { href: "/form", label: "Visitor Entry" },
-    { href: "/my-submissions", label: "My Entry's" },
+    { href: "/my-submissions", label: "My Entries" },
     { href: "/workers", label: "Party Workers" },
     { href: "/inward-letters", label: "Inward Letters" },
     { href: "/letters", label: "Outward Letters" },

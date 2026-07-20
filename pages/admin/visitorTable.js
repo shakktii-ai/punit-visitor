@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
+import * as XLSX from "xlsx";
 
 const PURPOSES = [
   "MEET WITH DADA",
@@ -329,6 +330,184 @@ const DetailModal = ({ visitor, onClose }) => {
   );
 };
 
+/* ─── Profile Modal (Visitor History & Activity Timeline) ─── */
+const ProfileModal = ({ visitor, onClose }) => {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(`/api/visitor-history?phone=${encodeURIComponent(visitor.phoneNo)}`);
+        const data = await res.json();
+        if (data.success) {
+          setHistory(data.visits || []);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load visit history.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [visitor]);
+
+  if (!visitor) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm overflow-y-auto flex items-start justify-center p-4 pt-8"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fade-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-5 text-white flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {visitor.photos ? (
+              <img
+                src={visitor.photos}
+                alt={visitor.fullName}
+                className="w-14 h-14 rounded-full object-cover border-2 border-white/80 shadow-md"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-lg border border-white/30">
+                {visitor.fullName?.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div>
+              <h2 className="text-xl font-bold tracking-wide">{visitor.fullName}</h2>
+              <p className="text-orange-50 text-xs mt-0.5">{visitor.phoneNo}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition text-lg font-semibold"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+          {/* Visitor Details */}
+          <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+            <div>
+              <p className="text-slate-400 text-xs">Gender</p>
+              <p className="text-slate-800 font-semibold text-sm capitalize">
+                {visitor.sex === "male" ? "Male" : visitor.sex === "female" ? "Female" : visitor.sex === "other" ? "Other" : visitor.sex || "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-400 text-xs">Address</p>
+              <p className="text-slate-800 font-semibold text-sm truncate max-w-[200px]" title={visitor.address || [visitor.houseNo, visitor.landmark, visitor.village, visitor.pincode].filter(Boolean).join(", ")}>
+                {visitor.address || [visitor.houseNo, visitor.landmark, visitor.village, visitor.pincode].filter(Boolean).join(", ") || "—"}
+              </p>
+            </div>
+          </div>
+
+          {/* History Statistics */}
+          <div className="flex items-center justify-between border-b border-orange-100 pb-3">
+            <h3 className="text-slate-800 font-bold text-base flex items-center gap-2">
+              <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Visit Activity Timeline
+            </h3>
+            <span className="bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-full border border-orange-200">
+              {loading ? "Calculating..." : `${history.length} Visit${history.length !== 1 ? "s" : ""}`}
+            </span>
+          </div>
+
+          {/* Timeline */}
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full" />
+            </div>
+          ) : history.length === 0 ? (
+            <p className="text-center py-10 text-slate-400 text-sm">No activity history found.</p>
+          ) : (
+            <div className="relative pl-6 border-l-2 border-orange-100 space-y-6 ml-3">
+              {history.map((visit) => {
+                const dateObj = visit.createdAt ? new Date(visit.createdAt) : null;
+                const dateStr = dateObj ? dateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+                const timeStr = dateObj ? dateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
+                
+                // Color mapping for statuses
+                const status = visit.status || "Pending";
+                let statusColor = "bg-amber-50 text-amber-700 border-amber-200";
+                if (status === "In Progress") statusColor = "bg-blue-50 text-blue-700 border-blue-200";
+                if (status === "Completed") statusColor = "bg-green-50 text-green-700 border-green-200";
+                if (status === "Rejected") statusColor = "bg-red-50 text-red-700 border-red-200";
+
+                return (
+                  <div key={visit._id} className="relative group animate-fade-in">
+                    {/* Bullet marker */}
+                    <span className="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-4 border-white bg-orange-500 shadow-md group-hover:scale-110 transition-transform" />
+                    
+                    <div className="bg-white border border-slate-100 hover:border-orange-100 hover:shadow-sm transition-all p-4 rounded-2xl space-y-2">
+                      {/* Date & Time */}
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-800 font-bold text-sm flex items-center gap-1.5">
+                          {dateStr} <span className="text-slate-400 text-xs font-normal">{timeStr}</span>
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${statusColor}`}>
+                          {status}
+                        </span>
+                      </div>
+
+                      {/* Purpose */}
+                      <div>
+                        <p className="text-xs text-slate-400">Nature of Work</p>
+                        <p className="text-slate-700 font-medium text-sm">
+                          {visit.purpose}
+                          {visit.purpose === "DRAINAGE" && visit.subPurpose ? ` (${visit.subPurpose})` : ""}
+                        </p>
+                      </div>
+
+                      {/* Work/Purpose Details if any */}
+                      {(visit.customPurpose || visit.customSubPurpose) && (
+                        <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs text-slate-600">
+                          <p className="font-medium text-slate-500 mb-0.5">Details</p>
+                          <p>{visit.customPurpose || visit.customSubPurpose}</p>
+                        </div>
+                      )}
+
+                      {/* Tracking / Follow Up */}
+                      {visit.followUp && (
+                        <div className="bg-orange-50/30 border border-orange-100/50 p-2.5 rounded-xl text-xs text-slate-700">
+                          <p className="font-bold text-orange-800 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                            Tracking Record
+                          </p>
+                          <p className="mt-0.5 leading-relaxed">{visit.followUp}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-slate-100 p-4 bg-slate-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl transition-all shadow-md shadow-orange-500/10"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ─── Confirm Delete Modal ─────────────────────────────────── */
 const ConfirmModal = ({ name, onConfirm, onCancel }) => (
   <div className="fixed inset-0 bg-black/50  backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -376,6 +555,7 @@ export default function VisitorTable() {
   const limit = 10;
 
   const [selectedVisitor, setSelectedVisitor]   = useState(null);
+  const [profileTarget, setProfileTarget]       = useState(null);
   const [deleteTarget, setDeleteTarget]         = useState(null);
   const [deleting, setDeleting]                 = useState(false);
 
@@ -440,6 +620,57 @@ export default function VisitorTable() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      toast.info("Fetching data for export...");
+      const params = new URLSearchParams({ page: 1, limit: 100000, search, purpose, sort });
+      const res = await fetch(`/api/visitors?${params}`);
+      const data = await res.json();
+      if (data.success && data.visitors) {
+        if (data.visitors.length === 0) {
+          toast.warning("No records to export.");
+          return;
+        }
+        
+        // Map the visitors to clean format for Excel
+        const exportData = data.visitors.map((v, idx) => {
+          const combinedAddress = v.address || [
+            v.houseNo,
+            v.landmark,
+            v.village,
+            v.pincode ? String(v.pincode) : ""
+          ].filter((val) => val && val.trim() !== "").join(", ");
+
+          return {
+            "Sr. No.": idx + 1,
+            "Full Name": v.fullName || "—",
+            "Phone Number": v.phoneNo || "—",
+            "Email": v.email || "—",
+            "Gender": v.sex ? (v.sex.charAt(0).toUpperCase() + v.sex.slice(1)) : "—",
+            "Address": combinedAddress || "—",
+            "Nature of Work": v.purpose || "—",
+            "Nature of Work Details": v.customPurpose || "—",
+            "Registered By": v.addedBy || "—",
+            "Status": v.status || "Pending",
+            "Follow-up Details": v.followUp || "—",
+            "Registered On": v.createdAt ? new Date(v.createdAt).toLocaleString("en-IN") : "—"
+          };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Visitors");
+        XLSX.writeFile(wb, "Visitors_List.xlsx");
+        toast.success("Visitor list exported successfully!");
+      } else {
+        toast.error("Failed to fetch visitors for export.");
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("An error occurred during export.");
+    }
+  };
+
   return (
     <>
       <Head>
@@ -459,15 +690,26 @@ export default function VisitorTable() {
               {total} visitor{total !== 1 ? "s" : ""} registered
             </p>
           </div>
-          <button
-            onClick={fetchVisitors}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-orange-200 text-orange-600 text-sm font-medium hover:bg-orange-50 transition-colors self-start sm:self-auto"
+          <div className="flex gap-2.5 self-start sm:self-auto">
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-semibold hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
             >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Refresh
-          </button>
+              <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export to Excel
+            </button>
+            <button
+              onClick={fetchVisitors}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-orange-200 text-orange-600 text-sm font-medium hover:bg-orange-50 transition-colors"
+            >
+              <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -513,6 +755,7 @@ export default function VisitorTable() {
         <div className="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-visible">
           
            {selectedVisitor && <DetailModal visitor={selectedVisitor} onClose={() => setSelectedVisitor(null)} />}
+           {profileTarget && <ProfileModal visitor={profileTarget} onClose={() => setProfileTarget(null)} />}
       {deleteTarget && (
         <ConfirmModal
           name={deleteTarget.fullName}
@@ -543,6 +786,7 @@ export default function VisitorTable() {
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Purpose</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Status</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Date</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Profile</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Actions</th>
                   </tr>
                 </thead>
@@ -597,6 +841,14 @@ export default function VisitorTable() {
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
                         {v.createdAt ? new Date(v.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => setProfileTarget(v)}
+                          className="px-2.5 py-1.5 rounded-lg border border-orange-200 text-orange-600 text-xs font-bold hover:bg-orange-50 transition-colors whitespace-nowrap"
+                        >
+                          View Profile
+                        </button>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
