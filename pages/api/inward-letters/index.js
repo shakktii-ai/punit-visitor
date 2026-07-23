@@ -8,10 +8,27 @@ const handler = async (req, res) => {
   const ALLOWED_ADMINS = ["admin", "MKulkarni", "Deshmukh"];
   const isAdmin = role === "admin" || ALLOWED_ADMINS.includes(username);
 
-  // GET: list inward letters or get single inward letter by ID
+  // GET: list inward letters or get single inward letter by ID or get next auto-generated inward number
   if (req.method === "GET") {
     try {
-      const { id } = req.query;
+      const { id, nextNumber } = req.query;
+
+      if (nextNumber) {
+        const letters = await InwardLetter.find({}).select("inwardNumber");
+        let num = 1;
+        if (letters && letters.length > 0) {
+          const numbers = letters
+            .map((l) => parseInt(l.inwardNumber, 10))
+            .filter((n) => !isNaN(n) && n > 0);
+          if (numbers.length > 0) {
+            num = Math.max(...numbers) + 1;
+          } else {
+            num = letters.length + 1;
+          }
+        }
+        return res.status(200).json({ success: true, nextNumber: String(num) });
+      }
+
       if (id) {
         const letter = await InwardLetter.findById(id);
         if (!letter) {

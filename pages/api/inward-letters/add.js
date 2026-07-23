@@ -16,10 +16,28 @@ const handler = async (req, res) => {
       photoUrl = await uploadToCloudinary(data.photo, 'inward-letters');
     }
 
+    // Auto-generate inward number starting from 1 if not provided
+    let finalInwardNumber = data.inwardNumber;
+    if (!finalInwardNumber || !finalInwardNumber.toString().trim()) {
+      const letters = await InwardLetter.find({}).select("inwardNumber");
+      let num = 1;
+      if (letters && letters.length > 0) {
+        const numbers = letters
+          .map((l) => parseInt(l.inwardNumber, 10))
+          .filter((n) => !isNaN(n) && n > 0);
+        if (numbers.length > 0) {
+          num = Math.max(...numbers) + 1;
+        } else {
+          num = letters.length + 1;
+        }
+      }
+      finalInwardNumber = String(num);
+    }
+
     const newLetter = new InwardLetter({
       photo: photoUrl,
       inwardDate: data.inwardDate,
-      inwardNumber: data.inwardNumber,
+      inwardNumber: finalInwardNumber,
       subject: data.subject,
       senderName: data.senderName,
       senderContact: data.senderContact,

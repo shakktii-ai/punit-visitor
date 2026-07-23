@@ -51,6 +51,19 @@ export default function InwardLetterForm({ initialData, onSubmit, isSubmitting, 
         status: initialData.status || "Pending",
         remark: initialData.remark || "",
       });
+    } else {
+      // Auto-fetch next sequential inward number starting from 1
+      fetch("/api/inward-letters?nextNumber=true")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.nextNumber) {
+            setFormData((prev) => ({
+              ...prev,
+              inwardNumber: prev.inwardNumber || data.nextNumber,
+            }));
+          }
+        })
+        .catch((err) => console.error("Error fetching next inward number:", err));
     }
   }, [initialData]);
 
@@ -173,7 +186,7 @@ export default function InwardLetterForm({ initialData, onSubmit, isSubmitting, 
 
   const labelClass = "block text-slate-700 text-sm font-medium mb-1.5";
 
-  const renderInput = (label, name, type = "text", placeholder = "") => {
+  const renderInput = (label, name, type = "text", placeholder = "", readOnly = false) => {
     const hasError = !!errors[name];
 
     return (
@@ -184,8 +197,11 @@ export default function InwardLetterForm({ initialData, onSubmit, isSubmitting, 
           name={name}
           value={formData[name] || ""}
           onChange={handleChange}
+          readOnly={readOnly}
           placeholder={placeholder || "Enter details"}
           className={`${inputClass} ${
+            readOnly ? "bg-slate-100 text-slate-700 font-bold cursor-not-allowed border-slate-300 shadow-inner" : ""
+          } ${
             hasError ? "border-red-500 focus:ring-red-500/20" : ""
           }`}
         />
@@ -322,7 +338,7 @@ export default function InwardLetterForm({ initialData, onSubmit, isSubmitting, 
           </div>
           {renderFileUpload("Letter Photo / Scan", "photo")}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {renderInput("Inward Number *", "inwardNumber", "text", "e.g. INW/2026/001")}
+            {renderInput("Inward Number (Auto) *", "inwardNumber", "text", "Auto-generated", true)}
             {renderInput("Inward Date *", "inwardDate", "date")}
             {renderInput("Subject *", "subject", "text", "e.g. Application for Road Construction")}
           </div>

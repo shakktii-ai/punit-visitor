@@ -459,13 +459,22 @@ const ProfileModal = ({ visitor, onClose }) => {
                         </span>
                       </div>
 
-                      {/* Purpose */}
-                      <div>
-                        <p className="text-xs text-slate-400">Nature of Work</p>
-                        <p className="text-slate-700 font-medium text-sm">
-                          {visit.purpose}
-                          {visit.purpose === "DRAINAGE" && visit.subPurpose ? ` (${visit.subPurpose})` : ""}
-                        </p>
+                      {/* Purpose & Mode */}
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs text-slate-400">Nature of Work</p>
+                          <p className="text-slate-700 font-medium text-sm">
+                            {visit.purpose}
+                            {visit.purpose === "DRAINAGE" && visit.subPurpose ? ` (${visit.subPurpose})` : ""}
+                          </p>
+                        </div>
+                        {visit.visitMode && (
+                          <div>
+                            <span className="text-[11px] font-semibold text-orange-700 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-lg inline-block">
+                              📍 {visit.visitMode}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Work/Purpose Details if any */}

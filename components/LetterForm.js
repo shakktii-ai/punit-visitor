@@ -42,6 +42,19 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
         nextAction: initialData.nextAction || "",
         followUpDate: formatInputDate(initialData.followUpDate),
       });
+    } else {
+      // Auto-fetch next sequential outward number starting from 1
+      fetch("/api/letters?nextNumber=true")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.nextNumber) {
+            setFormData((prev) => ({
+              ...prev,
+              inwardNumber: prev.inwardNumber || data.nextNumber,
+            }));
+          }
+        })
+        .catch((err) => console.error("Error fetching next outward number:", err));
     }
   }, [initialData]);
 
@@ -166,7 +179,7 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
 
   const labelClass = "block text-slate-700 text-sm font-medium mb-1.5";
 
-  const renderInput = (label, name, type = "text", placeholder = "") => {
+  const renderInput = (label, name, type = "text", placeholder = "", readOnly = false) => {
     const hasError = !!errors[name];
 
     return (
@@ -177,8 +190,11 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
           name={name}
           value={formData[name] || ""}
           onChange={handleChange}
+          readOnly={readOnly}
           placeholder={placeholder || "Enter details"}
           className={`${inputClass} ${
+            readOnly ? "bg-slate-100 text-slate-700 font-bold cursor-not-allowed border-slate-300 shadow-inner" : ""
+          } ${
             hasError ? "border-red-500 focus:ring-red-500/20" : ""
           }`}
         />
@@ -320,7 +336,7 @@ export default function LetterForm({ initialData, onSubmit, isSubmitting, backPa
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {renderInput("Subject *", "subject", "text", "e.g. Road Repair Request")}
-            {renderInput("Outward Number *", "inwardNumber", "text", "e.g. OUT/2026/102")}
+            {renderInput("Outward Number (Auto) *", "inwardNumber", "text", "Auto-generated", true)}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {renderInput("Letter Addressed To", "letterAddressedTo", "text", "e.g. Municipal Commissioner")}

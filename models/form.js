@@ -22,6 +22,7 @@ const FormDataSchema = new mongoose.Schema({
   phoneNo: String,
   age: Number,
   sex: String,
+  visitMode: String,
   address: String,
   subPurpose: String,
   customPurpose: String,

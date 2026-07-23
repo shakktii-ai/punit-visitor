@@ -299,7 +299,7 @@ export default function MySubmissions() {
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10 space-y-6">
         {/* Title */}
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800">My Entry's</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800">My Entries</h1>
           <p className="text-slate-500 text-sm mt-1">
             View details, current status, and follow-up remarks of visitors registered by you.
           </p>

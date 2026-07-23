@@ -13,6 +13,7 @@ const AddVisitor = () => {
     photos: "",
     fullName: "",
     phoneNo: "",
+    visitMode: "In the office",
     sex: "",
     address: "",
     purpose: "",
@@ -152,19 +153,19 @@ const AddVisitor = () => {
         setFormData((prev) => ({
           ...prev,
           fullName: data.fullName || "",
-          phoneNo: data.phoneNo || "",
+          phoneNo: data.phoneNo || searchPhone,
           sex: data.sex || "",
           address: data.address || "",
-          purpose: data.purpose || "",
-          subPurpose: data.subPurpose || "",
-          customPurpose: data.customPurpose || "",
-          customSubPurpose: data.customSubPurpose || "",
           photos: data.photos || "",
+          purpose: "",
+          subPurpose: "",
+          customPurpose: "",
+          customSubPurpose: "",
         }));
 
         setFoundVisitorName(data.fullName || "");
         setErrors({});
-        toast.success(`Welcome back, ${data.fullName}! Details have been pre-filled.`);
+        toast.success(`Welcome back, ${data.fullName}! Details have been pre-filled. Please select the purpose of this visit.`);
       } else {
         setFormData({
           photos: "",
@@ -205,6 +206,7 @@ const AddVisitor = () => {
       photos: "",
       fullName: "",
       phoneNo: "",
+      visitMode: "In the office",
       sex: "",
       address: "",
       purpose: "",
@@ -466,6 +468,22 @@ const AddVisitor = () => {
                     className={`${inputClass} ${errors.phoneNo ? "border-red-500 focus:ring-red-500/20" : ""}`}
                   />
                   {errors.phoneNo && <p className="text-xs text-red-500 mt-1">{errors.phoneNo}</p>}
+                </div>
+
+                {/* Mode of Interaction Dropdown */}
+                <div>
+                  <label className={labelClass}>Mode of Visit / Interaction</label>
+                  <select
+                    name="visitMode"
+                    value={formData.visitMode}
+                    onChange={handleChange}
+                    className={inputClass}
+                  >
+                    <option value="In the office">In the office</option>
+                    <option value="On Field">On Field</option>
+                    <option value="Phone">Phone</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                  </select>
                 </div>
 
                 {/* 3. Purpose / Nature of Work */}

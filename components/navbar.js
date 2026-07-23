@@ -8,10 +8,12 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [allowedPages, setAllowedPages] = useState([]);
   const [role, setRole] = useState("");
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setRole(localStorage.getItem("userRole") || "");
+      setUsername(localStorage.getItem("username") || "");
       const pagesStr = localStorage.getItem("allowedPages");
       setAllowedPages(pagesStr ? JSON.parse(pagesStr) : []);
     }
@@ -71,19 +73,32 @@ const Navbar = () => {
               key={item.href}
               href={item.href}
               className={`text-sm font-medium transition-colors ${
-                router.pathname === item.href ? "text-orange-500" : "text-slate-600 hover:text-orange-500"
+                router.pathname === item.href ? "text-orange-500 font-semibold" : "text-slate-600 hover:text-orange-500"
               }`}
             >
               {item.label}
             </Link>
           ))}
           {role ? (
-            <button
-              onClick={handleLogout}
-              className="text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 transition-all shadow-md shadow-orange-500/20"
-            >
-              Logout
-            </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 bg-orange-50/80 border border-orange-100 px-3 py-1.5 rounded-xl shadow-xs">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                  {(username?.[0] || role?.[0] || "U").toUpperCase()}
+                </div>
+                <div className="text-xs leading-tight">
+                  <span className="text-slate-800 font-bold block">{username || (role === "admin" ? "Admin" : "User")}</span>
+                  <span className="text-[10px] text-orange-600 font-semibold capitalize">
+                    {role === "admin" ? (username === "admin" ? "Super Admin" : "Sub Admin") : "Office Staff"}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-xs font-semibold px-3.5 py-2 rounded-xl border border-slate-200 text-slate-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all shadow-xs"
+              >
+                Logout
+              </button>
+            </div>
           ) : (
             <Link
               href="/login"
@@ -114,14 +129,24 @@ const Navbar = () => {
       {menuOpen && (
         <div className="md:hidden px-4 pb-4 space-y-2 border-t border-orange-50 bg-white">
           {/* Mobile Profile */}
-          <div className="flex items-center gap-2.5 py-3 border-b border-orange-50">
-            <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-300 shadow-sm flex-shrink-0">
-              <Image src="/punit.png" alt="Punit Joshi" fill className="object-cover" />
+          <div className="flex items-center justify-between py-3 border-b border-orange-50">
+            <div className="flex items-center gap-2.5">
+              <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-orange-300 shadow-sm flex-shrink-0">
+                <Image src="/punit.png" alt="Punit Joshi" fill className="object-cover" />
+              </div>
+              <div>
+                <p className="text-slate-800 text-sm font-bold">Punit Joshi</p>
+                <p className="text-orange-500 text-xs">Visitor Management</p>
+              </div>
             </div>
-            <div>
-              <p className="text-slate-800 text-sm font-bold">Punit Joshi</p>
-              <p className="text-orange-500 text-xs">Visitor Management</p>
-            </div>
+            {role && (
+              <div className="bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-xl text-right">
+                <p className="text-slate-800 text-xs font-bold">{username || (role === "admin" ? "Admin" : "User")}</p>
+                <p className="text-[10px] text-orange-600 font-semibold capitalize">
+                  {role === "admin" ? (username === "admin" ? "Super Admin" : "Sub Admin") : "Office Staff"}
+                </p>
+              </div>
+            )}
           </div>
           {filteredLinks.map((item) => (
             <Link
