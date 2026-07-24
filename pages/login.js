@@ -40,7 +40,7 @@ export default function Login() {
         if (data.role === "admin") {
           router.push("/admin");
         } else {
-          router.push("/form");
+          router.push("/");
         }
       } else {
         toast.error(data.error || "Invalid credentials.");

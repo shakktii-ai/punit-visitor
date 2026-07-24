@@ -250,8 +250,8 @@ export default function Home() {
         {mounted && role && (
           <div className="space-y-6 animate-fade-in">
             {/* User Greeting & Header Bar */}
-            <div className="bg-white border border-orange-100 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+            {/* <div className="bg-white border border-orange-100 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4"> */}
+              {/* <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center text-white font-bold text-base shadow-sm">
                   {(username?.[0] || role?.[0] || "U").toUpperCase()}
                 </div>
@@ -263,9 +263,9 @@ export default function Home() {
                     Role: <span className="font-semibold text-orange-600">{roleLabel}</span>
                   </p>
                 </div>
-              </div>
+              </div> */}
 
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3">
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-200 rounded-xl hover:bg-red-50 transition-all flex items-center gap-1.5"
@@ -275,8 +275,8 @@ export default function Home() {
                   </svg>
                   Logout
                 </button>
-              </div>
-            </div>
+              </div> */}
+            {/* </div> */}
 
             {/* Navigation Grid Section Header */}
             {/* <div className="flex items-center justify-between"> */}
