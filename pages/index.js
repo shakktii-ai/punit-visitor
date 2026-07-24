@@ -279,15 +279,15 @@ export default function Home() {
             </div>
 
             {/* Navigation Grid Section Header */}
-            <div className="flex items-center justify-between">
-              <div>
+            {/* <div className="flex items-center justify-between"> */}
+              {/* <div>
                 <h3 className="text-lg font-extrabold text-slate-800">Quick Navigation Workspace</h3>
                 <p className="text-xs text-slate-500">Select a module below to open its dedicated workspace page.</p>
               </div>
               <span className="text-xs font-bold px-3 py-1 bg-orange-100 text-orange-700 rounded-full">
                 {visibleBoxes.length} Modules Available
               </span>
-            </div>
+            </div> */}
 
             {/* Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">

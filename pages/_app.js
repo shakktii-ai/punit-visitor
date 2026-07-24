@@ -192,7 +192,7 @@ export default function App({ Component, pageProps }) {
           <Component {...pageProps} />
         </div>
       </main>
-      <Footer />
+       {/* <Footer /> */}
       <ToastContainer
         position="bottom-right"
         theme="light"
