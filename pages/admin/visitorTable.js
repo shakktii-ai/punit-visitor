@@ -853,7 +853,7 @@ export default function VisitorTable() {
                       </td>
                       <td className="px-4 py-3">
                         <button
-                          onClick={() => setProfileTarget(v)}
+                          onClick={() => router.push(`/admin/visitor-profile/${v._id}`)}
                           className="px-2.5 py-1.5 rounded-lg border border-orange-200 text-orange-600 text-xs font-bold hover:bg-orange-50 transition-colors whitespace-nowrap"
                         >
                           View Profile

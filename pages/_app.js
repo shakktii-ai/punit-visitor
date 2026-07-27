@@ -47,7 +47,7 @@ export default function App({ Component, pageProps }) {
             if (path.startsWith("/admin/search")) {
               return true;
             }
-            if (path.startsWith("/admin/visitorTable") || path.startsWith("/admin/addVisitor") || path.startsWith("/admin/edit-visitor")) {
+            if (path.startsWith("/admin/visitorTable") || path.startsWith("/admin/addVisitor") || path.startsWith("/admin/edit-visitor") || path.startsWith("/admin/visitor-profile")) {
               return allowedPages.includes("/admin/visitorTable");
             }
             if (path.startsWith("/admin/workers") || path.startsWith("/admin/addWorker") || path.startsWith("/admin/edit-worker")) {
