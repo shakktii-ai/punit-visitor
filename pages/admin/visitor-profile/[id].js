@@ -156,11 +156,12 @@ export default function VisitorProfile({ visitor, initialVisits }) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push("/admin/visitorTable")}
-              className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
-              title="Back to Visitors Table"
+              onClick={() => router.push("/admin/visitor-profile")}
+              className="p-2.5 px-3.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2 text-xs font-bold"
+              title="Back to All Profiles"
             >
-              <HiArrowLeft className="w-5 h-5" />
+              <HiArrowLeft className="w-4 h-4" />
+              <span>Profiles</span>
             </button>
             <div>
               <div className="flex items-center gap-2">
