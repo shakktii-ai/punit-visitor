@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Form from '@/models/form';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { logAuditEvent } from '@/lib/auditLogger';
 
 export default async function handler(req, res) {
   if (req.method === 'PUT') {
@@ -85,6 +86,15 @@ export default async function handler(req, res) {
       if (!visitor) {
         return res.status(404).json({ error: 'Visitor not found.' });
       }
+
+      await logAuditEvent({
+        module: "Visitors",
+        action: updatedData.status === "Closing Request" ? "STATUS_CHANGE" : "UPDATE",
+        performedBy: updaterName,
+        targetId: visitor._id,
+        targetName: visitor.fullName,
+        details: logEntry.details || logEntry.action,
+      });
 
       return res.status(200).json(visitor);
     } catch (error) {

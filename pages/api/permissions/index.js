@@ -1,6 +1,7 @@
 import connectDb from "@/middleware/mongoose";
 import Permission from "@/models/permission";
 import User from "@/models/user";
+import { logAuditEvent } from "@/lib/auditLogger";
 
 const HARDCODED_ADMINS = ["MKulkarni", "Deshmukh"];
 const HARDCODED_USERS = ["user@gmail.com", "OPathak", "MKulkarni", "Deshmukh", "NSavalgi", "DJadhav"];
@@ -44,7 +45,8 @@ const handler = async (req, res) => {
           "/admin/letters",
           "/admin/addLetter",
           "/admin/inward-letters",
-          "/admin/addInwardLetter"
+          "/admin/addInwardLetter",
+          "/admin/logs"
         ],
         isDynamic: dbUserSet.has(u)
       }));
@@ -79,6 +81,14 @@ const handler = async (req, res) => {
         { allowedPages },
         { new: true, upsert: true }
       );
+
+      await logAuditEvent({
+        module: "Permissions",
+        action: "PERMISSION_CHANGE",
+        performedBy: username || "admin",
+        targetName: targetUsername,
+        details: `Updated permissions for '${targetUsername}' (${allowedPages.length} pages allowed)`,
+      });
 
       return res.status(200).json({ success: true, message: "Permissions updated successfully.", record: updatedRecord });
     } catch (error) {

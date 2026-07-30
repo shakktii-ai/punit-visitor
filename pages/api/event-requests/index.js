@@ -1,6 +1,7 @@
 import EventRequest from '@/models/event-request';
 import connectDb from '@/middleware/mongoose';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { logAuditEvent } from '@/lib/auditLogger';
 
 const handler = async (req, res) => {
   const requestUsername = req.headers["x-username"] || req.query.username || "";
@@ -69,6 +70,16 @@ const handler = async (req, res) => {
       });
 
       await newRequest.save();
+
+      await logAuditEvent({
+        module: "Event Requests",
+        action: "CREATE",
+        performedBy: username || "User",
+        targetId: newRequest._id,
+        targetName: eventName,
+        details: `Submitted event invitation '${eventName}' scheduled for ${eventDate}`,
+      });
+
       return res.status(201).json({ success: true, request: newRequest });
     } catch (error) {
       console.error('Error creating event request:', error);

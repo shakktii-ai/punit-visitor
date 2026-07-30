@@ -1,6 +1,7 @@
 import Letter from '@/models/letter';
 import connectDb from '@/middleware/mongoose';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { logAuditEvent } from '@/lib/auditLogger';
 
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
@@ -50,6 +51,15 @@ const handler = async (req, res) => {
     });
 
     await newLetter.save();
+
+    await logAuditEvent({
+      module: "Letters",
+      action: "CREATE",
+      performedBy: data.createdBy || data.addedBy || "Admin",
+      targetId: newLetter._id,
+      targetName: data.subject || `Outward Letter #${finalOutwardNumber}`,
+      details: `Created Outward Letter #${finalOutwardNumber} addressed to '${data.letterAddressedTo || ""}'`,
+    });
 
     return res.status(200).json({ success: true, message: 'Letter registered successfully' });
   } catch (error) {

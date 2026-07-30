@@ -1,6 +1,7 @@
 import Worker from "@/models/worker";
 import connectDb from "@/middleware/mongoose";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { logAuditEvent } from "@/lib/auditLogger";
 
 const handler = async (req, res) => {
   const role = req.headers["x-user-role"] || "";
@@ -141,6 +142,17 @@ const handler = async (req, res) => {
       };
 
       const updatedWorker = await Worker.findByIdAndUpdate(workerId, updatedFields, { new: true });
+      const fullName = [updatedWorker.firstName, updatedWorker.lastName].filter(Boolean).join(" ") || "Worker";
+
+      await logAuditEvent({
+        module: "Workers",
+        action: "UPDATE",
+        performedBy: username || req.headers["x-username"] || "Admin",
+        targetId: updatedWorker._id,
+        targetName: fullName,
+        details: `Updated worker record for ${fullName} (${updatedWorker.position || ""})`,
+      });
+
       return res.status(200).json({ success: true, worker: updatedWorker, message: "Worker updated successfully." });
     } catch (error) {
       console.error("Error updating worker:", error);
@@ -168,7 +180,19 @@ const handler = async (req, res) => {
         }
       }
 
+      const fullName = [worker.firstName, worker.lastName].filter(Boolean).join(" ") || "Worker";
+
       await Worker.findByIdAndDelete(id);
+
+      await logAuditEvent({
+        module: "Workers",
+        action: "DELETE",
+        performedBy: username || req.headers["x-username"] || "Admin",
+        targetId: id,
+        targetName: fullName,
+        details: `Deleted worker record for ${fullName}`,
+      });
+
       return res.status(200).json({ success: true, message: "Worker deleted successfully." });
     } catch (error) {
       console.error("Error deleting worker:", error);

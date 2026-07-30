@@ -765,8 +765,9 @@ export default function VisitorTable() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
+    const loggedAdmin = typeof window !== "undefined" ? localStorage.getItem("username") || "Admin" : "Admin";
     try {
-      const res = await fetch(`/api/visitors?id=${deleteTarget._id}`, { method: "DELETE" });
+      const res = await fetch(`/api/visitors?id=${deleteTarget._id}&deletedBy=${encodeURIComponent(loggedAdmin)}`, { method: "DELETE" });
       const data = await res.json();
       if (data.success) {
         toast.success("Visitor deleted successfully.");

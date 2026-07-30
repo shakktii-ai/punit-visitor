@@ -1,6 +1,7 @@
 import Worker from '@/models/worker';
 import connectDb from '@/middleware/mongoose';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { logAuditEvent } from '@/lib/auditLogger';
 
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
@@ -46,6 +47,17 @@ const handler = async (req, res) => {
     });
 
     await newWorker.save();
+
+    const fullName = [data.firstName, data.lastName].filter(Boolean).join(" ") || "Worker";
+
+    await logAuditEvent({
+      module: "Workers",
+      action: "CREATE",
+      performedBy: data.createdBy || data.addedBy || "Admin",
+      targetId: newWorker._id,
+      targetName: fullName,
+      details: `New worker added: ${fullName} (${data.position || "Staff"})`,
+    });
 
     return res.status(200).json({ success: true, message: 'Worker registered successfully' });
   } catch (error) {

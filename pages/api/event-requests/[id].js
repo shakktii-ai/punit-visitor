@@ -2,6 +2,7 @@ import EventRequest from '@/models/event-request';
 import connectDb from '@/middleware/mongoose';
 import twilio from 'twilio';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { logAuditEvent } from '@/lib/auditLogger';
 
 const handler = async (req, res) => {
   const { id } = req.query;
@@ -33,8 +34,20 @@ const handler = async (req, res) => {
 
       const updatedRequest = await EventRequest.findByIdAndUpdate(id, updatedData, { new: true });
 
-      // Trigger Twilio notification if status changed and Twilio is configured
       const statusChanged = originalRequest.status !== updatedRequest.status;
+
+      await logAuditEvent({
+        module: "Event Requests",
+        action: statusChanged ? "STATUS_CHANGE" : "UPDATE",
+        performedBy: requestUsername || "Admin",
+        targetId: updatedRequest._id,
+        targetName: updatedRequest.eventName,
+        details: statusChanged
+          ? `Status changed from '${originalRequest.status}' to '${updatedRequest.status}'`
+          : `Updated event request details for '${updatedRequest.eventName}'`,
+      });
+
+      // Trigger Twilio notification if status changed and Twilio is configured
       const accountSid = process.env.TWILIO_ACCOUNT_SID;
       const authToken = process.env.TWILIO_AUTH_TOKEN;
       const from = process.env.TWILIO_PHONE_NUMBER;
@@ -79,6 +92,16 @@ const handler = async (req, res) => {
       if (!deletedRequest) {
         return res.status(404).json({ success: false, error: 'Event request not found.' });
       }
+
+      await logAuditEvent({
+        module: "Event Requests",
+        action: "DELETE",
+        performedBy: requestUsername || "Admin",
+        targetId: id,
+        targetName: deletedRequest.eventName,
+        details: `Deleted event request '${deletedRequest.eventName}'`,
+      });
+
       return res.status(200).json({ success: true, message: 'Event request deleted successfully.' });
     } catch (error) {
       console.error('Error deleting event request:', error);

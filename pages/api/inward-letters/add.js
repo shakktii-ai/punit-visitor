@@ -1,6 +1,7 @@
 import InwardLetter from '@/models/inward-letter';
 import connectDb from '@/middleware/mongoose';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { logAuditEvent } from '@/lib/auditLogger';
 
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
@@ -51,6 +52,15 @@ const handler = async (req, res) => {
     });
 
     await newLetter.save();
+
+    await logAuditEvent({
+      module: "Inward Letters",
+      action: "CREATE",
+      performedBy: data.createdBy || data.addedBy || "Admin",
+      targetId: newLetter._id,
+      targetName: data.subject || `Inward Letter #${finalInwardNumber}`,
+      details: `Created Inward Letter #${finalInwardNumber} from sender '${data.senderName || ""}'`,
+    });
 
     return res.status(200).json({ success: true, message: 'Inward letter registered successfully' });
   } catch (error) {

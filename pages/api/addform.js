@@ -1,6 +1,7 @@
 import Visit from '@/models/form';
 import connectDb from '@/middleware/mongoose';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { logAuditEvent } from '@/lib/auditLogger';
 
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
@@ -49,6 +50,19 @@ const handler = async (req, res) => {
     });
 
     await newVisit.save();
+
+    try {
+      await logAuditEvent({
+        module: "Visitors",
+        action: "CREATE",
+        performedBy: data.addedBy || "Admin",
+        targetId: newVisit._id,
+        targetName: newVisit.fullName || "Visitor",
+        details: `New visitor registered for purpose: ${newVisit.purpose || "General Visit"}`,
+      });
+    } catch (auditErr) {
+      console.error("Non-fatal audit log error:", auditErr);
+    }
 
     return res.status(200).json({ success: true, message: 'Visit added successfully' });
   } catch (error) {

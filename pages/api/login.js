@@ -1,6 +1,7 @@
 import connectDb from "@/middleware/mongoose";
 import Permission from "@/models/permission";
 import User from "@/models/user";
+import { logAuditEvent } from "@/lib/auditLogger";
 
 // Hardcoded admin credentials (can be moved to env vars)
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
@@ -46,7 +47,8 @@ const handler = async (req, res) => {
         "/admin/letters",
         "/admin/addLetter",
         "/admin/calendar",
-        "/admin/event-requests"
+        "/admin/event-requests",
+        "/admin/logs"
       ];
     } else {
       const permObj = await Permission.findOne({ username });
@@ -59,10 +61,20 @@ const handler = async (req, res) => {
           "/admin/workers",
           "/admin/addWorker",
           "/admin/letters",
-          "/admin/addLetter"
+          "/admin/addLetter",
+          "/admin/logs"
         ];
       }
     }
+
+    await logAuditEvent({
+      module: "Admin Auth",
+      action: "LOGIN",
+      performedBy: username,
+      targetName: username,
+      details: `Successful Admin login for user '${username}'`,
+    });
+
     return res.status(200).json({ role: "admin", username, allowedPages, message: "Login successful" });
   }
 
@@ -79,6 +91,15 @@ const handler = async (req, res) => {
         "/invitations"
       ];
     }
+
+    await logAuditEvent({
+      module: "Admin Auth",
+      action: "LOGIN",
+      performedBy: username,
+      targetName: username,
+      details: `Successful user login for user '${username}'`,
+    });
+
     return res.status(200).json({ role: "user", username, allowedPages, message: "Login successful" });
   }
 
@@ -107,8 +128,25 @@ const handler = async (req, res) => {
         ];
       }
     }
+
+    await logAuditEvent({
+      module: "Admin Auth",
+      action: "LOGIN",
+      performedBy: username,
+      targetName: username,
+      details: `Successful login for user '${username}' (${dbUser.role})`,
+    });
+
     return res.status(200).json({ role: dbUser.role, username: dbUser.username, allowedPages, message: "Login successful" });
   }
+
+  await logAuditEvent({
+    module: "Admin Auth",
+    action: "LOGIN_FAILED",
+    performedBy: username || "Unknown",
+    targetName: username || "Unknown",
+    details: `Failed login attempt for username '${username}'`,
+  });
 
   return res.status(401).json({ error: "Invalid username or password." });
 };

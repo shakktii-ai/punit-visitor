@@ -65,6 +65,9 @@ export default function App({ Component, pageProps }) {
             if (path.startsWith("/admin/event-requests")) {
               return allowedPages.includes("/admin/event-requests");
             }
+            if (path.startsWith("/admin/logs")) {
+              return ["MKulkarni", "Deshmukh"].includes(username) || allowedPages.includes("/admin/logs");
+            }
             if (path.startsWith("/admin/permissions")) {
               return false;
             }

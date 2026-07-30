@@ -1,6 +1,7 @@
 import InwardLetter from "@/models/inward-letter";
 import connectDb from "@/middleware/mongoose";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { logAuditEvent } from "@/lib/auditLogger";
 
 const handler = async (req, res) => {
   const role = req.headers["x-user-role"] || "";
@@ -138,6 +139,16 @@ const handler = async (req, res) => {
       };
 
       const updatedLetter = await InwardLetter.findByIdAndUpdate(letterId, updatedFields, { new: true });
+
+      await logAuditEvent({
+        module: "Inward Letters",
+        action: "UPDATE",
+        performedBy: username || req.headers["x-username"] || "Admin",
+        targetId: updatedLetter._id,
+        targetName: updatedLetter.subject || `Inward Letter #${updatedLetter.inwardNumber}`,
+        details: `Updated Inward Letter #${updatedLetter.inwardNumber}`,
+      });
+
       return res.status(200).json({ success: true, letter: updatedLetter, message: "Inward letter updated successfully." });
     } catch (error) {
       console.error("Error updating inward letter:", error);
@@ -165,7 +176,19 @@ const handler = async (req, res) => {
         }
       }
 
+      const letterName = letter.subject || `Inward Letter #${letter.inwardNumber}`;
+
       await InwardLetter.findByIdAndDelete(id);
+
+      await logAuditEvent({
+        module: "Inward Letters",
+        action: "DELETE",
+        performedBy: username || req.headers["x-username"] || "Admin",
+        targetId: id,
+        targetName: letterName,
+        details: `Deleted Inward Letter record: ${letterName}`,
+      });
+
       return res.status(200).json({ success: true, message: "Inward letter deleted successfully." });
     } catch (error) {
       console.error("Error deleting inward letter:", error);
