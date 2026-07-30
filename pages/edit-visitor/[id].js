@@ -43,11 +43,15 @@ const EditVisitor = ({ visitor }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    const loggedAdmin = typeof window !== "undefined" ? localStorage.getItem("username") || localStorage.getItem("userName") || "Admin" : "Admin";
     try {
       const response = await fetch(`/api/update-visitor/${visitor._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          updatedBy: loggedAdmin,
+        }),
       });
       if (response.ok) {
         toast.success("Visitor updated successfully!");

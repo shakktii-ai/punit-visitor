@@ -85,6 +85,16 @@ const FormDataSchema = new mongoose.Schema({
   addedBy: String,
   status: { type: String, default: "Pending" },
   followUp: { type: String, default: "" },
+  logs: [
+    {
+      updatedBy: String,
+      updatedAt: { type: Date, default: Date.now },
+      action: String,
+      status: String,
+      followUp: String,
+      details: String,
+    }
+  ],
 }, { timestamps: true });
 
 export default mongoose.models.FormData || mongoose.model('FormData', FormDataSchema);

@@ -38,7 +38,49 @@ export default async function handler(req, res) {
         );
       }
 
-      const visitor = await Form.findByIdAndUpdate(id, updatedData, { new: true });
+      // Prepare audit log entry
+      const updaterName = updatedData.updatedBy || "Admin";
+      const newStatus = updatedData.status;
+      const newFollowUp = updatedData.followUp;
+      let actionText = "Updated visitor details";
+      let detailsText = "";
+
+      if (updatedData.status === "Closing Request") {
+        actionText = "Submitted Closing Request";
+        detailsText = "Submitted closing request with completion details.";
+      } else if (updatedData.status === "Completed") {
+        actionText = "Status changed to Completed";
+        detailsText = "Admin reviewed and marked visitor request as completed.";
+      } else if (updatedData.status) {
+        actionText = `Status changed to ${updatedData.status}`;
+      }
+
+      if (newFollowUp) {
+        detailsText += detailsText ? ` | Remarks: ${newFollowUp}` : `Remarks: ${newFollowUp}`;
+      }
+
+      const logEntry = {
+        updatedBy: updaterName,
+        updatedAt: new Date(),
+        action: actionText,
+        status: newStatus || "",
+        followUp: newFollowUp || "",
+        details: detailsText || "Updated fields",
+      };
+
+      // Delete properties that conflict with $push or _id immutable field
+      delete updatedData.updatedBy;
+      delete updatedData.logs;
+      delete updatedData._id;
+
+      const visitor = await Form.findByIdAndUpdate(
+        id,
+        {
+          ...updatedData,
+          $push: { logs: logEntry },
+        },
+        { new: true }
+      );
 
       if (!visitor) {
         return res.status(404).json({ error: 'Visitor not found.' });

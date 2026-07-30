@@ -586,6 +586,120 @@ const ConfirmModal = ({ name, onConfirm, onCancel }) => (
   </div>
 );
 
+/* ─── Visitor Audit Logs Modal ─────────────────────────────────────── */
+const VisitorLogsModal = ({ visitor, onClose }) => {
+  if (!visitor) return null;
+
+  const createdDateObj = visitor.createdAt ? new Date(visitor.createdAt) : null;
+  const createdDateStr = createdDateObj ? createdDateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+  const createdTimeStr = createdDateObj ? createdDateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) : "";
+
+  const creationLog = {
+    updatedBy: visitor.addedBy || "admin",
+    updatedAt: visitor.createdAt,
+    action: "🆕 Visitor Registration Created",
+    status: "Pending",
+    details: `Visitor file initially registered by ${visitor.addedBy || "admin"}. Purpose / Nature of work: ${visitor.purpose || "General Visit"}.`,
+    isCreation: true,
+  };
+
+  const updateLogs = visitor.logs || [];
+  const allLogs = [creationLog, ...updateLogs];
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-orange-100" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-500 to-amber-500 p-6 text-white flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+              📋
+            </div>
+            <div>
+              <h3 className="text-lg font-bold">Visitor Activity Logs</h3>
+              <p className="text-orange-100 text-xs mt-0.5">
+                {visitor.fullName} ({visitor.phoneNo}) • Registered on {createdDateStr} by <span className="font-bold text-white underline">{visitor.addedBy || "admin"}</span>
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg font-bold">
+            ✕
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+          {/* Top Banner showing Created Info */}
+          <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">File Registration Info</p>
+              <p className="text-sm font-semibold text-slate-800 mt-0.5">
+                Created on: <span className="text-emerald-700">{createdDateStr} at {createdTimeStr}</span>
+              </p>
+            </div>
+            <div className="text-right">
+              <span className="text-xs text-slate-400 block font-medium">Registered By</span>
+              <span className="text-xs font-bold text-emerald-900 bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-lg">
+                👤 {visitor.addedBy || "admin"}
+              </span>
+            </div>
+          </div>
+
+          <div className="relative pl-6 border-l-2 border-orange-200 space-y-6 ml-3 py-2">
+            {allLogs.slice().reverse().map((log, idx) => {
+              const dateObj = log.updatedAt ? new Date(log.updatedAt) : null;
+              const dateStr = dateObj ? dateObj.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+              const timeStr = dateObj ? dateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) : "";
+
+              return (
+                <div key={idx} className="relative group">
+                  <span className={`absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-4 border-white shadow-sm ${log.isCreation ? "bg-emerald-500" : "bg-orange-500"}`} />
+                  <div className={`border p-4 rounded-2xl space-y-2 ${log.isCreation ? "bg-emerald-50/40 border-emerald-200" : "bg-slate-50 border-slate-200"}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2">
+                      <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        📅 {dateStr} <span className="text-slate-400 font-normal text-[11px]">{timeStr}</span>
+                      </span>
+                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-md border ${log.isCreation ? "text-emerald-800 bg-emerald-100 border-emerald-200" : "text-orange-700 bg-orange-50 border-orange-200"}`}>
+                        👤 {log.isCreation ? "Created by" : "Updated by"}: {log.updatedBy || "admin"}
+                      </span>
+                    </div>
+
+                    {log.action && (
+                      <p className={`text-sm font-bold ${log.isCreation ? "text-emerald-900" : "text-slate-800"}`}>
+                        {log.action}
+                      </p>
+                    )}
+
+                    {log.status && (
+                      <div className="text-xs">
+                        <span className="text-slate-500 font-medium">Status: </span>
+                        <span className="font-semibold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">{log.status}</span>
+                      </div>
+                    )}
+
+                    {log.details && (
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-100 text-xs text-slate-600 leading-relaxed">
+                        {log.details}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="bg-slate-50 border-t border-slate-100 p-4 flex justify-end">
+          <button onClick={onClose} className="px-5 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ─── Main Page ────────────────────────────────────────────── */
 export default function VisitorTable() {
   const router = useRouter();
@@ -603,6 +717,7 @@ export default function VisitorTable() {
 
   const [selectedVisitor, setSelectedVisitor]   = useState(null);
   const [profileTarget, setProfileTarget]       = useState(null);
+  const [logsTarget, setLogsTarget]             = useState(null);
   const [deleteTarget, setDeleteTarget]         = useState(null);
   const [deleting, setDeleting]                 = useState(false);
 
@@ -803,6 +918,7 @@ export default function VisitorTable() {
           
            {selectedVisitor && <DetailModal visitor={selectedVisitor} onClose={() => setSelectedVisitor(null)} />}
            {profileTarget && <ProfileModal visitor={profileTarget} onClose={() => setProfileTarget(null)} />}
+           {logsTarget && <VisitorLogsModal visitor={logsTarget} onClose={() => setLogsTarget(null)} />}
       {deleteTarget && (
         <ConfirmModal
           name={deleteTarget.fullName}
@@ -834,6 +950,7 @@ export default function VisitorTable() {
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Status</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Registered By</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Created At</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Visitor Logs</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Profile</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Actions</th>
                   </tr>
@@ -895,6 +1012,14 @@ export default function VisitorTable() {
                       </td>
                       <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
                         {v.createdAt ? new Date(v.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => setLogsTarget(v)}
+                          className="px-2.5 py-1.5 rounded-lg bg-orange-50 border border-orange-200 text-orange-700 text-xs font-bold hover:bg-orange-100 transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                        >
+                          <span>📋 Visitor Logs ({v.logs ? v.logs.length : 0})</span>
+                        </button>
                       </td>
                       <td className="px-4 py-3">
                         <button

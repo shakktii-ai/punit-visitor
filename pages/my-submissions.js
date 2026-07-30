@@ -189,10 +189,10 @@ const DetailModal = ({ visitor, onClose, onUpdateVisitor }) => {
 
   const handleSubmitClosingRequest = async () => {
     const combinedAfter = [...afterImages, ...newAfterImages];
-    if (combinedAfter.length === 0) {
-      toast.warning("Please upload at least one After Image before submitting Closing Request.");
-      return;
-    }
+    const loggedUser =
+      typeof window !== "undefined"
+        ? localStorage.getItem("username") || localStorage.getItem("userName") || visitor.addedBy || visitor.fullName
+        : visitor.addedBy || "User";
 
     setSubmittingAfter(true);
     try {
@@ -202,6 +202,7 @@ const DetailModal = ({ visitor, onClose, onUpdateVisitor }) => {
         body: JSON.stringify({
           afterImages: combinedAfter,
           status: "Closing Request",
+          updatedBy: loggedUser,
         }),
       });
       const data = await res.json();
@@ -349,7 +350,7 @@ const DetailModal = ({ visitor, onClose, onUpdateVisitor }) => {
             <div className="bg-orange-50/40 border border-orange-200/60 rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-800">After Work / Completion Images</h4>
+                  <h4 className="text-sm font-bold text-slate-800">After Work / Completion Images (Optional)</h4>
                   <p className="text-xs text-slate-500">Upload geotagged images showing completed work to submit a Closing Request to Admin.</p>
                 </div>
                 {visitor.status === "Closing Request" && (

@@ -520,17 +520,68 @@ const Form = () => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="bg-white border border-orange-100 rounded-3xl p-6 md:p-8 shadow-sm space-y-5">
-                {/* 1. Full Name */}
+                {/* 1. Full Name & Visitor Photo */}
                 <div>
                   <label className={labelClass}>Full Name *</label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="e.g. Rahul Sharma"
-                    className={`${inputClass} ${errors.fullName ? "border-red-500 focus:ring-red-500/20" : ""}`}
-                  />
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleChange}
+                        placeholder="e.g. Rahul Sharma"
+                        className={`${inputClass} ${errors.fullName ? "border-red-500 focus:ring-red-500/20" : ""}`}
+                      />
+                    </div>
+
+                    {/* Visitor Photo Camera Button / Preview */}
+                    <div className="flex-shrink-0">
+                      {formData.photos ? (
+                        <div className="relative group w-12 h-12">
+                          <img
+                            src={formData.photos}
+                            alt="Visitor Photo"
+                            className="w-12 h-12 rounded-2xl object-cover border-2 border-orange-500 shadow-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, photos: "" }))}
+                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px] font-bold shadow hover:bg-red-700 transition-colors"
+                            title="Remove photo"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => startCamera("photos")}
+                            className="w-12 h-12 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white flex items-center justify-center shadow-md shadow-orange-500/20 transition-all"
+                            title="Take Visitor Photo with Camera"
+                          >
+                            <HiCameraIcon className="w-6 h-6" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById("file-personal-photo").click()}
+                            className="w-12 h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 flex items-center justify-center transition-all"
+                            title="Upload Visitor Photo"
+                          >
+                            <HiCloudUploadIcon className="w-5 h-5 text-slate-600" />
+                          </button>
+                          <input
+                            id="file-personal-photo"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleSinglePhotoChange}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
                 </div>
 
@@ -694,60 +745,7 @@ const Form = () => {
                   </select>
                 </div>
 
-                {/* 6. Personal Photo / Image (Optional) */}
-                <div>
-                  <label className={labelClass}>Personal Photo / Image (Optional)</label>
-                  <div className="relative">
-                    {formData.photos ? (
-                      <div className="max-w-sm space-y-3">
-                        <div className="relative">
-                          <img
-                            src={formData.photos}
-                            alt="Personal Photo Preview"
-                            className="w-full h-40 object-cover rounded-xl border border-orange-200 shadow-sm"
-                          />
-                          <div className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-sm text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-400/30">
-                            📍 Geotagged
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setFormData((prev) => ({ ...prev, photos: "" }))}
-                            className="absolute top-2 left-2 w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold hover:bg-red-700 shadow transition-colors"
-                            title="Remove photo"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <button
-                          type="button"
-                          onClick={() => document.getElementById("file-personal-photo").click()}
-                          className="flex-1 py-3 px-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2 text-sm text-slate-700 font-semibold shadow-sm"
-                        >
-                          <HiCloudUploadIcon className="w-5 h-5 text-orange-500" />
-                          Upload Personal Photo
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => startCamera("photos")}
-                          className="flex-1 py-3 px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-orange-500/10"
-                        >
-                          <HiCameraIcon className="w-5 h-5" />
-                          Take Personal Photo
-                        </button>
-                      </div>
-                    )}
-                    <input
-                      id="file-personal-photo"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleSinglePhotoChange}
-                    />
-                  </div>
-                </div>
+
 
                 {/* 7. Documents / Before Images Field */}
                 <div>
