@@ -794,7 +794,8 @@ export default function VisitorTable() {
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Address</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Purpose</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Status</th>
-                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Date</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Registered By</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Created At</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Profile</th>
                     <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">Actions</th>
                   </tr>
@@ -848,8 +849,13 @@ export default function VisitorTable() {
                           );
                         })()}
                       </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                          {v.addedBy || "admin"}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">
-                        {v.createdAt ? new Date(v.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                        {v.createdAt ? new Date(v.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : "—"}
                       </td>
                       <td className="px-4 py-3">
                         <button
