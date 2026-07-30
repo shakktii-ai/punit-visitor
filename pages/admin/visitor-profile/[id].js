@@ -84,6 +84,7 @@ export default function VisitorProfile({ visitor, initialVisits }) {
   const getStatusBadge = (status) => {
     let color = "bg-amber-100 text-amber-700 border-amber-200";
     if (status === "In Progress") color = "bg-blue-100 text-blue-700 border-blue-200";
+    if (status === "Closing Request") color = "bg-purple-100 text-purple-700 border-purple-200";
     if (status === "Completed") color = "bg-green-100 text-green-700 border-green-200";
     if (status === "Rejected") color = "bg-red-100 text-red-700 border-red-200";
     return (
@@ -361,6 +362,38 @@ export default function VisitorProfile({ visitor, initialVisits }) {
                               </div>
                             ))}
                           </div>
+                        </div>
+                      )}
+                      {/* Before & After Images Grid */}
+                      {((v.beforeImages && v.beforeImages.length > 0) || (v.afterImages && v.afterImages.length > 0) || v.photos) && (
+                        <div className="bg-white rounded-xl p-4 border border-slate-200/60 space-y-3">
+                          {((v.beforeImages && v.beforeImages.length > 0) || v.photos) && (
+                            <div>
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Documents / Before Images</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {(v.beforeImages && v.beforeImages.length > 0 ? v.beforeImages : [v.photos]).map((imgUrl, i) => (
+                                  <div key={i} className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900">
+                                    <img src={imgUrl} alt={`Before ${i+1}`} className="w-full h-24 object-cover" />
+                                    <span className="absolute top-1 left-1 bg-slate-900/80 text-amber-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-400/30">📍 Geotagged</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {v.afterImages && v.afterImages.length > 0 && (
+                            <div>
+                              <p className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">After Work Images</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {v.afterImages.map((imgUrl, i) => (
+                                  <div key={i} className="relative rounded-xl overflow-hidden border border-purple-300 bg-slate-900">
+                                    <img src={imgUrl} alt={`After ${i+1}`} className="w-full h-24 object-cover" />
+                                    <span className="absolute top-1 left-1 bg-slate-900/80 text-amber-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-400/30">📍 Geotagged</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 

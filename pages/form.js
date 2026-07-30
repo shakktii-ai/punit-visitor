@@ -10,6 +10,8 @@ const Form = () => {
 
   const [formData, setFormData] = useState({
     photos: "",
+    beforeImages: [],
+    afterImages: [],
     fullName: "",
     phoneNo: "",
     visitMode: "",
@@ -57,98 +59,106 @@ const Form = () => {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   }, []);
 
-  const addGeotagToImage = useCallback((dataUrl, fieldName, currentAddress = "") => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width || 640;
-      canvas.height = img.height || 480;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const processGeotagImage = useCallback((dataUrl, currentAddress = "") => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width || 640;
+        canvas.height = img.height || 480;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      const applyWatermark = (lat, lng) => {
-        const width = canvas.width;
-        const height = canvas.height;
-        const bannerHeight = Math.max(65, Math.round(height * 0.16));
+        const applyWatermark = (lat, lng) => {
+          const width = canvas.width;
+          const height = canvas.height;
+          const bannerHeight = Math.max(65, Math.round(height * 0.16));
 
-        // Dark background banner
-        const gradient = ctx.createLinearGradient(0, height - bannerHeight, 0, height);
-        gradient.addColorStop(0, "rgba(15, 23, 42, 0.85)");
-        gradient.addColorStop(1, "rgba(15, 23, 42, 0.95)");
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, height - bannerHeight, width, bannerHeight);
+          // Dark background banner
+          const gradient = ctx.createLinearGradient(0, height - bannerHeight, 0, height);
+          gradient.addColorStop(0, "rgba(15, 23, 42, 0.85)");
+          gradient.addColorStop(1, "rgba(15, 23, 42, 0.95)");
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, height - bannerHeight, width, bannerHeight);
 
-        // Accent orange bar
-        ctx.fillStyle = "#F97316";
-        ctx.fillRect(0, height - bannerHeight, Math.max(6, Math.round(width * 0.01)), bannerHeight);
+          // Accent orange bar
+          ctx.fillStyle = "#F97316";
+          ctx.fillRect(0, height - bannerHeight, Math.max(6, Math.round(width * 0.01)), bannerHeight);
 
-        // Text styling
-        const fontSize = Math.max(12, Math.round(bannerHeight * 0.22));
-        ctx.font = `bold ${fontSize}px sans-serif`;
-        ctx.fillStyle = "#FFFFFF";
+          // Text styling
+          const fontSize = Math.max(12, Math.round(bannerHeight * 0.22));
+          ctx.font = `bold ${fontSize}px sans-serif`;
+          ctx.fillStyle = "#FFFFFF";
 
-        const now = new Date();
-        const timeStr = now.toLocaleString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: true,
-        });
+          const now = new Date();
+          const timeStr = now.toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true,
+          });
 
-        const line1 = lat && lng 
-          ? `📍 LAT: ${Number(lat).toFixed(6)}°  |  LON: ${Number(lng).toFixed(6)}°`
-          : `📍 GEOTAG RECORDED`;
-        const line2 = `📅 DATE: ${timeStr}`;
-        const line3 = currentAddress ? `🏠 LOC: ${currentAddress.slice(0, 55)}` : "";
+          const line1 = lat && lng 
+            ? `📍 LAT: ${Number(lat).toFixed(6)}°  |  LON: ${Number(lng).toFixed(6)}°`
+            : `📍 GEOTAG RECORDED`;
+          const line2 = `📅 DATE: ${timeStr}`;
+          const line3 = currentAddress ? `🏠 LOC: ${currentAddress.slice(0, 55)}` : "";
 
-        const paddingLeft = Math.max(14, Math.round(width * 0.03));
-        let startY = height - bannerHeight + Math.round(bannerHeight * 0.3);
-        const lineGap = Math.round(bannerHeight * 0.28);
+          const paddingLeft = Math.max(14, Math.round(width * 0.03));
+          let startY = height - bannerHeight + Math.round(bannerHeight * 0.3);
+          const lineGap = Math.round(bannerHeight * 0.28);
 
-        ctx.fillText(line1, paddingLeft, startY);
-        ctx.fillText(line2, paddingLeft, startY + lineGap);
-        if (line3) {
-          ctx.fillStyle = "#FDBA74";
-          ctx.fillText(line3, paddingLeft, startY + lineGap * 2);
+          ctx.fillText(line1, paddingLeft, startY);
+          ctx.fillText(line2, paddingLeft, startY + lineGap);
+          if (line3) {
+            ctx.fillStyle = "#FDBA74";
+            ctx.fillText(line3, paddingLeft, startY + lineGap * 2);
+          }
+
+          resolve(canvas.toDataURL("image/jpeg", 0.92));
+        };
+
+        if (typeof window !== "undefined" && "geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => applyWatermark(pos.coords.latitude, pos.coords.longitude),
+            () => applyWatermark(null, null),
+            { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+          );
+        } else {
+          applyWatermark(null, null);
         }
-
-        const geotaggedDataUrl = canvas.toDataURL("image/jpeg", 0.92);
-        setFormData((prev) => ({ ...prev, [fieldName]: geotaggedDataUrl }));
-        setErrors((prev) => ({ ...prev, [fieldName]: "" }));
       };
-
-      if (typeof window !== "undefined" && "geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            applyWatermark(pos.coords.latitude, pos.coords.longitude);
-          },
-          (err) => {
-            console.warn("Geolocation warning:", err);
-            applyWatermark(null, null);
-          },
-          { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
-        );
-      } else {
-        applyWatermark(null, null);
-      }
-    };
-    img.src = dataUrl;
+      img.src = dataUrl;
+    });
   }, []);
 
-  const handleFileChange = useCallback((e, fieldName) => {
-    const file = e.target.files[0];
-    if (file) {
+  const handleBeforeImagesChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    for (const file of files) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        addGeotagToImage(reader.result, fieldName, formData.address || "");
+      reader.onloadend = async () => {
+        const geotagged = await processGeotagImage(reader.result, formData.address || "");
+        setFormData((prev) => ({
+          ...prev,
+          beforeImages: [...(prev.beforeImages || []), geotagged],
+        }));
       };
       reader.readAsDataURL(file);
     }
-  }, [addGeotagToImage, formData.address]);
+  };
+
+  const removeBeforeImage = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      beforeImages: (prev.beforeImages || []).filter((_, i) => i !== index),
+    }));
+  };
 
   const stopCamera = useCallback(() => {
     if (cameraStream) {
@@ -182,7 +192,19 @@ const Form = () => {
     startCamera(activeCameraField, nextMode);
   };
 
-  const capturePhoto = () => {
+  const handleSinglePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const geotagged = await processGeotagImage(reader.result, formData.address || "");
+        setFormData((prev) => ({ ...prev, photos: geotagged }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const capturePhoto = async () => {
     if (videoRef.current && activeCameraField) {
       const video = videoRef.current;
       const canvas = document.createElement("canvas");
@@ -191,7 +213,15 @@ const Form = () => {
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const rawDataUrl = canvas.toDataURL("image/jpeg", 0.92);
-      addGeotagToImage(rawDataUrl, activeCameraField, formData.address || "");
+      const geotagged = await processGeotagImage(rawDataUrl, formData.address || "");
+      if (activeCameraField === "photos") {
+        setFormData((prev) => ({ ...prev, photos: geotagged }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          beforeImages: [...(prev.beforeImages || []), geotagged],
+        }));
+      }
       stopCamera();
     }
   };
@@ -664,71 +694,120 @@ const Form = () => {
                   </select>
                 </div>
 
-                {/* 6. Photo Field */}
+                {/* 6. Personal Photo / Image (Optional) */}
                 <div>
-                  <label className={labelClass}>Photo (Optional)</label>
+                  <label className={labelClass}>Personal Photo / Image (Optional)</label>
                   <div className="relative">
                     {formData.photos ? (
-                      <div className="max-w-sm mx-auto space-y-3">
+                      <div className="max-w-sm space-y-3">
                         <div className="relative">
                           <img
                             src={formData.photos}
-                            alt="Geotagged Preview"
-                            className="w-full h-44 object-cover rounded-xl border border-orange-200 shadow-sm"
+                            alt="Personal Photo Preview"
+                            className="w-full h-40 object-cover rounded-xl border border-orange-200 shadow-sm"
                           />
-                          <div className="absolute top-2.5 right-2.5 bg-slate-900/80 backdrop-blur-sm text-amber-400 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400/30 flex items-center gap-1 shadow-md">
-                            <span>📍 Geotagged</span>
+                          <div className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-sm text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-400/30">
+                            📍 Geotagged
                           </div>
-                        </div>
-                        <div className="flex gap-3">
                           <button
                             type="button"
-                            onClick={() => document.getElementById("file-photos").click()}
-                            className="flex-1 py-2.5 px-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-1.5 text-xs text-slate-700 font-semibold shadow-sm"
+                            onClick={() => setFormData((prev) => ({ ...prev, photos: "" }))}
+                            className="absolute top-2 left-2 w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold hover:bg-red-700 shadow transition-colors"
+                            title="Remove photo"
                           >
-                            <HiCloudUploadIcon className="w-4 h-4 text-orange-500" />
-                            Upload New
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => startCamera("photos")}
-                            className="flex-1 py-2.5 px-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl text-white transition-all flex items-center justify-center gap-1.5 text-xs font-semibold shadow-md shadow-orange-500/10"
-                          >
-                            <HiCameraIcon className="w-4 h-4" />
-                            Use Camera
+                            ✕
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="w-full p-6 border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-orange-50/10 rounded-xl flex flex-col items-center justify-center transition-all duration-300">
-                        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
-                          <button
-                            type="button"
-                            onClick={() => document.getElementById("file-photos").click()}
-                            className="flex-1 py-3 px-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-orange-500/50 transition-all duration-300 flex items-center justify-center gap-2 text-sm text-slate-700 font-semibold shadow-sm"
-                          >
-                            <HiCloudUploadIcon className="w-5 h-5 text-orange-500" />
-                            Upload File
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => startCamera("photos")}
-                            className="flex-1 py-3 px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl text-white transition-all duration-300 flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-orange-500/10"
-                          >
-                            <HiCameraIcon className="w-5 h-5" />
-                            Take Photo
-                          </button>
-                        </div>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById("file-personal-photo").click()}
+                          className="flex-1 py-3 px-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2 text-sm text-slate-700 font-semibold shadow-sm"
+                        >
+                          <HiCloudUploadIcon className="w-5 h-5 text-orange-500" />
+                          Upload Personal Photo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startCamera("photos")}
+                          className="flex-1 py-3 px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-xl transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-orange-500/10"
+                        >
+                          <HiCameraIcon className="w-5 h-5" />
+                          Take Personal Photo
+                        </button>
                       </div>
                     )}
                     <input
-                      id="file-photos"
+                      id="file-personal-photo"
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => handleFileChange(e, "photos")}
+                      onChange={handleSinglePhotoChange}
                     />
                   </div>
+                </div>
+
+                {/* 7. Documents / Before Images Field */}
+                <div>
+                  <label className={labelClass}>Documents / Before Images (Optional)</label>
+                  <p className="text-xs text-slate-500 mb-2">
+                    Upload multiple geotagged photos or documents related to your visit request.
+                  </p>
+
+                  {formData.beforeImages && formData.beforeImages.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                      {formData.beforeImages.map((imgUrl, index) => (
+                        <div key={index} className="relative group rounded-xl overflow-hidden border border-orange-200 shadow-sm bg-slate-900">
+                          <img
+                            src={imgUrl}
+                            alt={`Before Image ${index + 1}`}
+                            className="w-full h-32 object-cover"
+                          />
+                          <div className="absolute top-1.5 left-1.5 bg-slate-900/80 backdrop-blur-sm text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-400/30">
+                            📍 Geotagged
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeBeforeImage(index)}
+                            className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold hover:bg-red-700 shadow transition-colors"
+                            title="Remove image"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById("file-before-images").click()}
+                      className="flex-1 py-3 px-4 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-orange-500/50 transition-all flex items-center justify-center gap-2 text-sm text-slate-700 font-semibold shadow-sm"
+                    >
+                      <HiCloudUploadIcon className="w-5 h-5 text-orange-500" />
+                      {formData.beforeImages && formData.beforeImages.length > 0 ? "Add More Documents" : "Upload Documents / Before Images"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => startCamera("beforeImages")}
+                      className="flex-1 py-3 px-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 rounded-xl text-white transition-all flex items-center justify-center gap-2 text-sm font-semibold shadow-md shadow-orange-500/10"
+                    >
+                      <HiCameraIcon className="w-5 h-5" />
+                      Take Photo with Camera
+                    </button>
+                  </div>
+
+                  <input
+                    id="file-before-images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleBeforeImagesChange}
+                  />
                 </div>
               </div>
 

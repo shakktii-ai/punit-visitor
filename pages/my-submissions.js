@@ -67,6 +67,11 @@ const statusStyles = {
     icon: <HiClock className="w-4 h-4 text-blue-500 flex-shrink-0 animate-pulse" />,
     label: "In Progress"
   },
+  "Closing Request": {
+    bg: "bg-purple-50 text-purple-700 border-purple-200",
+    icon: <HiClock className="w-4 h-4 text-purple-500 flex-shrink-0 animate-pulse" />,
+    label: "Closing Request"
+  },
   "Completed": {
     bg: "bg-green-50 text-green-700 border-green-200",
     icon: <HiCheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />,
@@ -80,8 +85,140 @@ const statusStyles = {
 };
 
 /* ─── Detail Modal ─────────────────────────────────────────── */
-const DetailModal = ({ visitor, onClose }) => {
+const DetailModal = ({ visitor, onClose, onUpdateVisitor }) => {
   if (!visitor) return null;
+
+  const [afterImages, setAfterImages] = useState(visitor.afterImages || []);
+  const [newAfterImages, setNewAfterImages] = useState([]);
+  const [submittingAfter, setSubmittingAfter] = useState(false);
+
+  const beforeImagesList = (visitor.beforeImages && visitor.beforeImages.length > 0)
+    ? visitor.beforeImages
+    : (visitor.photos ? [visitor.photos] : []);
+
+  const processGeotagImage = (dataUrl, currentAddress = "") => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width || 640;
+        canvas.height = img.height || 480;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const applyWatermark = (lat, lng) => {
+          const width = canvas.width;
+          const height = canvas.height;
+          const bannerHeight = Math.max(65, Math.round(height * 0.16));
+
+          const gradient = ctx.createLinearGradient(0, height - bannerHeight, 0, height);
+          gradient.addColorStop(0, "rgba(15, 23, 42, 0.85)");
+          gradient.addColorStop(1, "rgba(15, 23, 42, 0.95)");
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, height - bannerHeight, width, bannerHeight);
+
+          ctx.fillStyle = "#F97316";
+          ctx.fillRect(0, height - bannerHeight, Math.max(6, Math.round(width * 0.01)), bannerHeight);
+
+          const fontSize = Math.max(12, Math.round(bannerHeight * 0.22));
+          ctx.font = `bold ${fontSize}px sans-serif`;
+          ctx.fillStyle = "#FFFFFF";
+
+          const now = new Date();
+          const timeStr = now.toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true,
+          });
+
+          const line1 = lat && lng 
+            ? `📍 LAT: ${Number(lat).toFixed(6)}°  |  LON: ${Number(lng).toFixed(6)}°`
+            : `📍 GEOTAG RECORDED`;
+          const line2 = `📅 DATE: ${timeStr}`;
+          const line3 = currentAddress ? `🏠 LOC: ${currentAddress.slice(0, 55)}` : "";
+
+          const paddingLeft = Math.max(14, Math.round(width * 0.03));
+          let startY = height - bannerHeight + Math.round(bannerHeight * 0.3);
+          const lineGap = Math.round(bannerHeight * 0.28);
+
+          ctx.fillText(line1, paddingLeft, startY);
+          ctx.fillText(line2, paddingLeft, startY + lineGap);
+          if (line3) {
+            ctx.fillStyle = "#FDBA74";
+            ctx.fillText(line3, paddingLeft, startY + lineGap * 2);
+          }
+
+          resolve(canvas.toDataURL("image/jpeg", 0.92));
+        };
+
+        if (typeof window !== "undefined" && "geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => applyWatermark(pos.coords.latitude, pos.coords.longitude),
+            () => applyWatermark(null, null),
+            { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+          );
+        } else {
+          applyWatermark(null, null);
+        }
+      };
+      img.src = dataUrl;
+    });
+  };
+
+  const handleAfterImagesChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    for (const file of files) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const geotagged = await processGeotagImage(reader.result, visitor.address || "");
+        setNewAfterImages((prev) => [...prev, geotagged]);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeNewAfterImage = (index) => {
+    setNewAfterImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitClosingRequest = async () => {
+    const combinedAfter = [...afterImages, ...newAfterImages];
+    if (combinedAfter.length === 0) {
+      toast.warning("Please upload at least one After Image before submitting Closing Request.");
+      return;
+    }
+
+    setSubmittingAfter(true);
+    try {
+      const res = await fetch(`/api/update-visitor/${visitor._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          afterImages: combinedAfter,
+          status: "Closing Request",
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("After Images submitted! Status changed to Closing Request.");
+        if (onUpdateVisitor) onUpdateVisitor(data);
+        onClose();
+      } else {
+        toast.error(data.error || "Failed to submit After Images.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error submitting After Images.");
+    } finally {
+      setSubmittingAfter(false);
+    }
+  };
 
   const getStatusText = (status) => {
     return statusStyles[status]?.label || status || "Pending";
@@ -189,6 +326,97 @@ const DetailModal = ({ visitor, onClose }) => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Documents / Before Images */}
+            {beforeImagesList.length > 0 && (
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                <h4 className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">Documents / Before Images</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {beforeImagesList.map((imgUrl, i) => (
+                    <div key={i} className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 group">
+                      <img src={imgUrl} alt={`Before ${i+1}`} className="w-full h-28 object-cover" />
+                      <div className="absolute top-1 left-1 bg-slate-900/80 backdrop-blur-sm text-amber-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-400/30">
+                        📍 Geotagged
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* After Images Upload & Closing Request Section */}
+            <div className="bg-orange-50/40 border border-orange-200/60 rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">After Work / Completion Images</h4>
+                  <p className="text-xs text-slate-500">Upload geotagged images showing completed work to submit a Closing Request to Admin.</p>
+                </div>
+                {visitor.status === "Closing Request" && (
+                  <span className="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full border border-purple-200">
+                    Closing Request Sent
+                  </span>
+                )}
+              </div>
+
+              {/* Grid of uploaded/existing After Images */}
+              {([...afterImages, ...newAfterImages]).length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {afterImages.map((imgUrl, i) => (
+                    <div key={`existing-${i}`} className="relative rounded-xl overflow-hidden border border-purple-200 bg-slate-900">
+                      <img src={imgUrl} alt={`After ${i+1}`} className="w-full h-28 object-cover" />
+                      <div className="absolute top-1 left-1 bg-slate-900/80 backdrop-blur-sm text-amber-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-400/30">
+                        📍 Geotagged
+                      </div>
+                    </div>
+                  ))}
+                  {newAfterImages.map((imgUrl, i) => (
+                    <div key={`new-${i}`} className="relative rounded-xl overflow-hidden border border-purple-300 bg-slate-900">
+                      <img src={imgUrl} alt={`New After ${i+1}`} className="w-full h-28 object-cover" />
+                      <div className="absolute top-1 left-1 bg-slate-900/80 backdrop-blur-sm text-amber-400 text-[9px] font-bold px-1.5 py-0.5 rounded border border-amber-400/30">
+                        📍 Geotagged
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeNewAfterImage(i)}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-600 text-white flex items-center justify-center text-xs font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Upload Input & Submit Closing Request Button */}
+              {visitor.status !== "Completed" && (
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <input
+                    id="file-after-images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleAfterImagesChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById("file-after-images").click()}
+                    className="px-4 py-2.5 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    📷 Upload After Images
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSubmitClosingRequest}
+                    disabled={submittingAfter}
+                    className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-purple-500/20 disabled:opacity-50"
+                  >
+                    {submittingAfter ? "Submitting..." : "Submit Closing Request"}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Message/Notes */}
@@ -372,6 +600,8 @@ export default function MySubmissions() {
                     <th className="px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Visitor Name</th>
                     <th className="px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nature of Work</th>
                     <th className="px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                    <th className="px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">After Work / Completion Images</th>
+                    <th className="px-5 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Closing Request Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -408,6 +638,38 @@ export default function MySubmissions() {
                       </td>
                       <td className="px-5 py-4">
                         {getStatusBadge(v.status)}
+                      </td>
+                      <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                        {v.afterImages && v.afterImages.length > 0 ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-purple-200 bg-slate-900 flex-shrink-0">
+                              <img src={v.afterImages[0]} alt="After Work" className="w-full h-full object-cover" />
+                            </div>
+                            <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                              {v.afterImages.length} Image{v.afterImages.length > 1 ? "s" : ""}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">No images uploaded</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+                        {v.status === "Completed" ? (
+                          <span className="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-200">
+                            Completed
+                          </span>
+                        ) : v.status === "Closing Request" ? (
+                          <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200">
+                            Closing Request Sent
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setSelectedVisitor(v)}
+                            className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                          >
+                            <span>📷 Upload & Submit Closing</span>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -461,6 +723,12 @@ export default function MySubmissions() {
         <DetailModal
           visitor={selectedVisitor}
           onClose={() => setSelectedVisitor(null)}
+          onUpdateVisitor={(updated) => {
+            setSelectedVisitor(updated);
+            setSubmissions((prev) =>
+              prev.map((sub) => (sub._id === updated._id ? updated : sub))
+            );
+          }}
         />
       )}
     </>

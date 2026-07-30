@@ -222,6 +222,7 @@ const EditVisitor = ({ visitor }) => {
                 {renderSelect("Status", "status", [
                   { value: "Pending", label: "Pending" },
                   { value: "In Progress", label: "In Progress" },
+                  { value: "Closing Request", label: "Closing Request" },
                   { value: "Completed", label: "Completed" },
                   { value: "Rejected", label: "Rejected" },
                 ])}

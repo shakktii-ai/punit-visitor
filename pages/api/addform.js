@@ -16,11 +16,28 @@ const handler = async (req, res) => {
       photosUrl = await uploadToCloudinary(data.photos, 'visitors/photos');
     }
 
+    let uploadedBeforeImages = [];
+    if (Array.isArray(data.beforeImages) && data.beforeImages.length > 0) {
+      uploadedBeforeImages = await Promise.all(
+        data.beforeImages.map(async (img) => {
+          if (img && img.startsWith('data:image')) {
+            return await uploadToCloudinary(img, 'visitors/before_images');
+          }
+          return img;
+        })
+      );
+    } else if (photosUrl) {
+      uploadedBeforeImages = [photosUrl];
+    }
+
     const newVisit = new Visit({
-      photos: photosUrl,
+      photos: photosUrl || (uploadedBeforeImages[0] || ''),
+      beforeImages: uploadedBeforeImages,
+      afterImages: Array.isArray(data.afterImages) ? data.afterImages : [],
       fullName: data.fullName,
       phoneNo: data.phoneNo,
       sex: data.sex,
+      visitMode: data.visitMode || '',
       address: data.address,
       purpose: data.purpose,
       subPurpose: data.subPurpose || '',

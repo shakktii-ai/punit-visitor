@@ -440,8 +440,14 @@ const ProfileModal = ({ visitor, onClose }) => {
                 const status = visit.status || "Pending";
                 let statusColor = "bg-amber-50 text-amber-700 border-amber-200";
                 if (status === "In Progress") statusColor = "bg-blue-50 text-blue-700 border-blue-200";
+                if (status === "Closing Request") statusColor = "bg-purple-50 text-purple-700 border-purple-200";
                 if (status === "Completed") statusColor = "bg-green-50 text-green-700 border-green-200";
                 if (status === "Rejected") statusColor = "bg-red-50 text-red-700 border-red-200";
+
+                const beforeList = (visit.beforeImages && visit.beforeImages.length > 0)
+                  ? visit.beforeImages
+                  : (visit.photos ? [visit.photos] : []);
+                const afterList = visit.afterImages || [];
 
                 return (
                   <div key={visit._id} className="relative group animate-fade-in">
@@ -482,6 +488,38 @@ const ProfileModal = ({ visitor, onClose }) => {
                         <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs text-slate-600">
                           <p className="font-medium text-slate-500 mb-0.5">Details</p>
                           <p>{visit.customPurpose || visit.customSubPurpose}</p>
+                        </div>
+                      )}
+
+                      {/* Documents / Before & After Images */}
+                      {(beforeList.length > 0 || afterList.length > 0) && (
+                        <div className="space-y-2 pt-1">
+                          {beforeList.length > 0 && (
+                            <div>
+                              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Before Images / Documents ({beforeList.length})</p>
+                              <div className="grid grid-cols-3 gap-2">
+                                {beforeList.map((imgUrl, i) => (
+                                  <div key={i} className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
+                                    <img src={imgUrl} alt={`Before ${i+1}`} className="w-full h-20 object-cover" />
+                                    <span className="absolute top-1 left-1 bg-slate-900/80 backdrop-blur-sm text-amber-400 text-[8px] font-bold px-1 rounded">📍 Geotagged</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {afterList.length > 0 && (
+                            <div>
+                              <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wider mb-1">After Images ({afterList.length})</p>
+                              <div className="grid grid-cols-3 gap-2">
+                                {afterList.map((imgUrl, i) => (
+                                  <div key={i} className="relative rounded-lg overflow-hidden border border-purple-300 bg-slate-900">
+                                    <img src={imgUrl} alt={`After ${i+1}`} className="w-full h-20 object-cover" />
+                                    <span className="absolute top-1 left-1 bg-slate-900/80 backdrop-blur-sm text-amber-400 text-[8px] font-bold px-1 rounded">📍 Geotagged</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -840,6 +878,7 @@ export default function VisitorTable() {
                           const status = v.status || "Pending";
                           let color = "bg-amber-100 text-amber-700 border-amber-200";
                           if (status === "In Progress") color = "bg-blue-100 text-blue-700 border-blue-200";
+                          if (status === "Closing Request") color = "bg-purple-100 text-purple-700 border-purple-200";
                           if (status === "Completed") color = "bg-green-100 text-green-700 border-green-200";
                           if (status === "Rejected") color = "bg-red-100 text-red-700 border-red-200";
                           return (

@@ -16,6 +16,28 @@ export default async function handler(req, res) {
         updatedData.photos = await uploadToCloudinary(updatedData.photos, 'visitors/photos');
       }
 
+      if (Array.isArray(updatedData.afterImages) && updatedData.afterImages.length > 0) {
+        updatedData.afterImages = await Promise.all(
+          updatedData.afterImages.map(async (img) => {
+            if (img && img.startsWith('data:image')) {
+              return await uploadToCloudinary(img, 'visitors/after_images');
+            }
+            return img;
+          })
+        );
+      }
+
+      if (Array.isArray(updatedData.beforeImages) && updatedData.beforeImages.length > 0) {
+        updatedData.beforeImages = await Promise.all(
+          updatedData.beforeImages.map(async (img) => {
+            if (img && img.startsWith('data:image')) {
+              return await uploadToCloudinary(img, 'visitors/before_images');
+            }
+            return img;
+          })
+        );
+      }
+
       const visitor = await Form.findByIdAndUpdate(id, updatedData, { new: true });
 
       if (!visitor) {

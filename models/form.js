@@ -17,6 +17,8 @@ if (typeof window === "undefined") {
 
 const FormDataSchema = new mongoose.Schema({
   photos: String,
+  beforeImages: [String],
+  afterImages: [String],
   fullName: String,
   email: String,
   phoneNo: String,
