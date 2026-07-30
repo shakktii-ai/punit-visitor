@@ -12,7 +12,7 @@ const Form = () => {
     photos: "",
     fullName: "",
     phoneNo: "",
-    visitMode: "In the office",
+    visitMode: "",
     sex: "",
     address: "",
     purpose: "",
@@ -57,17 +57,98 @@ const Form = () => {
     setErrors((prev) => ({ ...prev, [name]: "" }));
   }, []);
 
+  const addGeotagToImage = useCallback((dataUrl, fieldName, currentAddress = "") => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width || 640;
+      canvas.height = img.height || 480;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      const applyWatermark = (lat, lng) => {
+        const width = canvas.width;
+        const height = canvas.height;
+        const bannerHeight = Math.max(65, Math.round(height * 0.16));
+
+        // Dark background banner
+        const gradient = ctx.createLinearGradient(0, height - bannerHeight, 0, height);
+        gradient.addColorStop(0, "rgba(15, 23, 42, 0.85)");
+        gradient.addColorStop(1, "rgba(15, 23, 42, 0.95)");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, height - bannerHeight, width, bannerHeight);
+
+        // Accent orange bar
+        ctx.fillStyle = "#F97316";
+        ctx.fillRect(0, height - bannerHeight, Math.max(6, Math.round(width * 0.01)), bannerHeight);
+
+        // Text styling
+        const fontSize = Math.max(12, Math.round(bannerHeight * 0.22));
+        ctx.font = `bold ${fontSize}px sans-serif`;
+        ctx.fillStyle = "#FFFFFF";
+
+        const now = new Date();
+        const timeStr = now.toLocaleString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        });
+
+        const line1 = lat && lng 
+          ? `📍 LAT: ${Number(lat).toFixed(6)}°  |  LON: ${Number(lng).toFixed(6)}°`
+          : `📍 GEOTAG RECORDED`;
+        const line2 = `📅 DATE: ${timeStr}`;
+        const line3 = currentAddress ? `🏠 LOC: ${currentAddress.slice(0, 55)}` : "";
+
+        const paddingLeft = Math.max(14, Math.round(width * 0.03));
+        let startY = height - bannerHeight + Math.round(bannerHeight * 0.3);
+        const lineGap = Math.round(bannerHeight * 0.28);
+
+        ctx.fillText(line1, paddingLeft, startY);
+        ctx.fillText(line2, paddingLeft, startY + lineGap);
+        if (line3) {
+          ctx.fillStyle = "#FDBA74";
+          ctx.fillText(line3, paddingLeft, startY + lineGap * 2);
+        }
+
+        const geotaggedDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+        setFormData((prev) => ({ ...prev, [fieldName]: geotaggedDataUrl }));
+        setErrors((prev) => ({ ...prev, [fieldName]: "" }));
+      };
+
+      if (typeof window !== "undefined" && "geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            applyWatermark(pos.coords.latitude, pos.coords.longitude);
+          },
+          (err) => {
+            console.warn("Geolocation warning:", err);
+            applyWatermark(null, null);
+          },
+          { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+        );
+      } else {
+        applyWatermark(null, null);
+      }
+    };
+    img.src = dataUrl;
+  }, []);
+
   const handleFileChange = useCallback((e, fieldName) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, [fieldName]: reader.result }));
-        setErrors((prev) => ({ ...prev, [fieldName]: "" }));
+        addGeotagToImage(reader.result, fieldName, formData.address || "");
       };
       reader.readAsDataURL(file);
     }
-  }, []);
+  }, [addGeotagToImage, formData.address]);
 
   const stopCamera = useCallback(() => {
     if (cameraStream) {
@@ -109,9 +190,8 @@ const Form = () => {
       canvas.height = video.videoHeight || 480;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
-      setFormData((prev) => ({ ...prev, [activeCameraField]: dataUrl }));
-      setErrors((prev) => ({ ...prev, [activeCameraField]: "" }));
+      const rawDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+      addGeotagToImage(rawDataUrl, activeCameraField, formData.address || "");
       stopCamera();
     }
   };
@@ -199,7 +279,7 @@ const Form = () => {
       photos: "",
       fullName: "",
       phoneNo: "",
-      visitMode: "In the office",
+      visitMode: "",
       sex: "",
       address: "",
       purpose: "",
@@ -240,7 +320,7 @@ const Form = () => {
       if (formData.purpose === "DRAINAGE" && !formData.subPurpose) {
         newErrors.subPurpose = "Drainage sub-type is required.";
       }
-      if (formData.purpose === "Other" && (!formData.customPurpose || !formData.customPurpose.trim())) {
+      if ((formData.purpose === "Other" || formData.purpose === "OTHER") && (!formData.customPurpose || !formData.customPurpose.trim())) {
         newErrors.customPurpose = "Please specify nature of work.";
       }
       if (formData.purpose === "DRAINAGE" && formData.subPurpose === "Other" && (!formData.customSubPurpose || !formData.customSubPurpose.trim())) {
@@ -447,6 +527,7 @@ const Form = () => {
                     onChange={handleChange}
                     className={inputClass}
                   >
+                    <option value="">Select</option>
                     <option value="In the office">In the office</option>
                     <option value="On Field">On Field</option>
                     <option value="Phone">Phone</option>
@@ -481,16 +562,16 @@ const Form = () => {
                     <option value="BIRTH & DEATH CERTIFICATE CORRECTION">BIRTH & DEATH CERTIFICATE CORRECTION</option>
                     <option value="RECOMONDATION LETTER">RECOMONDATION LETTER</option>
                     <option value="ADMISSION LETTER">ADMISSION LETTER</option>
-                    <option value="toilet">toilet</option>
-                    <option value="medical assit.">medical assit.</option>
-                    <option value="ambulance">ambulance</option>
-                    <option value="ration kit">ration kit</option>
-                    <option value="Monitery Help">Monitery Help</option>
-                    <option value="chairty">chairty</option>
-                    <option value="in kind help">in kind help</option>
-                    <option value="tanker">tanker</option>
+                    <option value="TOILET">TOILET</option>
+                    <option value="MEDICAL ASSIT.">MEDICAL ASSIT.</option>
+                    <option value="AMBULANCE">AMBULANCE</option>
+                    <option value="RATION KIT">RATION KIT</option>
+                    <option value="MONITERY HELP">MONITERY HELP</option>
+                    <option value="CHAIRTY">CHAIRTY</option>
+                    <option value="IN KIND HELP">IN KIND HELP</option>
+                    <option value="TANKER">TANKER</option>
                     <option value="SCHOOL / COLLEGE FEE LETTER">SCHOOL / COLLEGE FEE LETTER</option>
-                    <option value="Other">Other</option>
+                    <option value="OTHER">OTHER</option>
                   </select>
                   {errors.purpose && <p className="text-xs text-red-500 mt-1">{errors.purpose}</p>}
                 </div>
@@ -499,14 +580,14 @@ const Form = () => {
                 {formData.purpose && formData.purpose !== "DRAINAGE" && (
                   <div className="mt-4 animate-fade-in">
                     <label className={labelClass}>
-                      Nature of Work Details {formData.purpose === "Other" ? "(Required) *" : "(Optional)"}
+                      Nature of Work Details {(formData.purpose === "Other" || formData.purpose === "OTHER") ? "(Required) *" : "(Optional)"}
                     </label>
                     <input
                       type="text"
                       name="customPurpose"
                       value={formData.customPurpose}
                       onChange={handleChange}
-                      placeholder={formData.purpose === "Other" ? "Please specify details" : "Enter additional details if any"}
+                      placeholder={(formData.purpose === "Other" || formData.purpose === "OTHER") ? "Please specify details" : "Enter additional details if any"}
                       className={`${inputClass} ${errors.customPurpose ? "border-red-500 focus:ring-red-500/20" : ""}`}
                     />
                     {errors.customPurpose && <p className="text-xs text-red-500 mt-1">{errors.customPurpose}</p>}
@@ -589,11 +670,16 @@ const Form = () => {
                   <div className="relative">
                     {formData.photos ? (
                       <div className="max-w-sm mx-auto space-y-3">
-                        <img
-                          src={formData.photos}
-                          alt="Preview"
-                          className="w-full h-40 object-cover rounded-xl border border-orange-100"
-                        />
+                        <div className="relative">
+                          <img
+                            src={formData.photos}
+                            alt="Geotagged Preview"
+                            className="w-full h-44 object-cover rounded-xl border border-orange-200 shadow-sm"
+                          />
+                          <div className="absolute top-2.5 right-2.5 bg-slate-900/80 backdrop-blur-sm text-amber-400 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400/30 flex items-center gap-1 shadow-md">
+                            <span>📍 Geotagged</span>
+                          </div>
+                        </div>
                         <div className="flex gap-3">
                           <button
                             type="button"

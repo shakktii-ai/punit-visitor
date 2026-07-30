@@ -22,16 +22,16 @@ const PURPOSES = [
   "BIRTH & DEATH CERTIFICATE CORRECTION",
   "RECOMONDATION LETTER",
   "ADMISSION LETTER",
-  "toilet",
-  "medical assit.",
-  "ambulance",
-  "ration kit",
-  "Monitery Help",
-  "chairty",
-  "in kind help",
-  "tanker",
+  "TOILET",
+  "MEDICAL ASSIT.",
+  "AMBULANCE",
+  "RATION KIT",
+  "MONITERY HELP",
+  "CHAIRTY",
+  "IN KIND HELP",
+  "TANKER",
   "SCHOOL / COLLEGE FEE LETTER",
-  "Other"
+  "OTHER"
 ];
 
 const purposeColors = {

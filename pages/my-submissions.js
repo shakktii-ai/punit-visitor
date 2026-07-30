@@ -22,16 +22,16 @@ const PURPOSES = [
   { value: "BIRTH & DEATH CERTIFICATE CORRECTION", label: "BIRTH & DEATH CERTIFICATE CORRECTION" },
   { value: "RECOMONDATION LETTER", label: "RECOMONDATION LETTER" },
   { value: "ADMISSION LETTER", label: "ADMISSION LETTER" },
-  { value: "toilet", label: "toilet" },
-  { value: "medical assit.", label: "medical assit." },
-  { value: "ambulance", label: "ambulance" },
-  { value: "ration kit", label: "ration kit" },
-  { value: "Monitery Help", label: "Monitery Help" },
-  { value: "chairty", label: "chairty" },
-  { value: "in kind help", label: "in kind help" },
-  { value: "tanker", label: "tanker" },
+  { value: "TOILET", label: "TOILET" },
+  { value: "MEDICAL ASSIT.", label: "MEDICAL ASSIT." },
+  { value: "AMBULANCE", label: "AMBULANCE" },
+  { value: "RATION KIT", label: "RATION KIT" },
+  { value: "MONITERY HELP", label: "MONITERY HELP" },
+  { value: "CHAIRTY", label: "CHAIRTY" },
+  { value: "IN KIND HELP", label: "IN KIND HELP" },
+  { value: "TANKER", label: "TANKER" },
   { value: "SCHOOL / COLLEGE FEE LETTER", label: "SCHOOL / COLLEGE FEE LETTER" },
-  { value: "Other", label: "Other" }
+  { value: "OTHER", label: "OTHER" }
 ];
 
 const purposeColors = {
